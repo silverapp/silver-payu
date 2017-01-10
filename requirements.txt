@@ -1,0 +1,2 @@
+django-silver
+django-payu-ro==1.0.0-rc1
