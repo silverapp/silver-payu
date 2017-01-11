@@ -1,0 +1,23 @@
+{% extends 'forms/transaction_form.html' %}
+{% load i18n %}
+
+{% block payment_processor %}
+{% endblock %}
+
+{% block form %}
+    {{ block.super }}
+
+    <form action="https://secure.epayment.ro/order/lu.php" method="post">
+        {{ form }}
+        <button type="submit" class="btn btn-primary pay"><i class="icon-chevron-right"></i>
+            {% trans "Pay by Card - using Live Update method" %}
+        </button>
+    </form>
+
+    {{ form }}
+{% endblock %}
+
+{% block transaction %}
+    {{ block.super }}
+    {{ payment_method.data.details }}
+{% endblock %}

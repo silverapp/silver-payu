@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from payment_methods import BraintreePaymentMethod
-from payment_processors import BraintreeTriggered
+from .payment_methods import PayUPaymentMethod
+from .payment_processors import PayUTriggered
