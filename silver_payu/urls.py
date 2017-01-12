@@ -13,20 +13,18 @@
 # limitations under the License.
 
 
-from django.conf.urls import include, url
+from django.conf.urls import include, url, patterns
 
 from silver.views import pay_transaction_view
 
-from .views import successful_transaction, failed_transaction
+from .views import process_transaction
 
 
 urlpatterns = [
-    url(r'payu/(?P<transaction_uuid>[0-9a-z-]+)/success$',
-        successful_transaction, name='successful-transaction'),
-    url(r'payu/(?P<transaction_uuid>[0-9a-z-]+)/fail$',
-        failed_transaction, name='failed-transaction'),
+    url(r'(?P<transaction_uuid>[0-9a-z-]+)/proccess$',
+        process_transaction, name='process-transaction'),
 ]
 
 urlpatterns += patterns('',
-    (r'^payu/', include('payu.urls')),
+    (r'^', include('payu.urls')),
 )

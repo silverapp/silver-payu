@@ -15,7 +15,10 @@
 from django_fsm import TransitionNotAllowed
 
 from django.utils import timezone
+from django.dispatch import receiver
 
+from payu.signals import payment_authorized, alu_payment_created
+from silver.models import Transaction
 from silver.models.payment_processors.base import PaymentProcessorBase
 from silver.models.payment_processors.mixins import TriggeredProcessorMixin
 
@@ -40,12 +43,17 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         pass
 
     def update_transaction_status(self, transaction, status):
-        if status == "pending":
-            try:
-                transaction.proccess()
-            except TransitionNotAllowed as e:
-                # TODO handle this (probably throw something else)
-                pass
+        try:
+            if status == "pending":
+                transaction.process()
+            elif status == "failed":
+                transaction.process()
+                transaction.fail()
+            elif status == "settle":
+                transaction.settle()
+        except TransitionNotAllowed as e:
+            # TODO handle this (probably throw something else)
+            pass
 
         transaction.save()
 
@@ -62,4 +70,21 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
                                      transaction.States.Pending]:
             return False
 
+        # TODO: decrypt token
+        # TODO: send token request to payu
+        # TODO: change transaction to pending
+
         return True
+
+
+@receiver(payment_authorized)
+def payu_ipn_received(sender, **kwargs):
+    transaction = Transaction.objects.get(uuid=sender.REFNOEXT)
+    transaction.payment_processor.update_transaction_status(transaction,
+                                                            "settle")
+
+
+@receiver(alu_token_created)
+def payu_ipn_received(sender, **kwargs):
+    transaction = Transaction.objects.get(uuid=sender.ipn.REFNOEXT)
+    # TODO: set token

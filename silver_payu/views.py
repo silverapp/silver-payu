@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from uuid import UUID
 
 from django_fsm import TransitionNotAllowed
 
 from django.conf import settings
-from django.http import (HttpResponse, HttpResponseBadRequest,
+from django.http import (HttpResponseRedirect, HttpResponseBadRequest,
                          Http404, HttpResponseGone)
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 
 from silver.views import GenericTransactionView
@@ -29,8 +32,9 @@ class PayUTransactionView(GenericTransactionView):
     pass
 
 
+@require_GET
 @csrf_exempt
-def successful_transaction(request, transaction_uuid):
+def process_transaction(request, transaction_uuid):
     try:
         uuid = UUID(transaction_uuid, version=4)
     except ValueError:
@@ -44,28 +48,18 @@ def successful_transaction(request, transaction_uuid):
     transaction.last_access = timezone.now()
     transaction.save()
 
-    transaction.payment_processor.update_transaction_status(transaction,
-                                                            "pending")
+    redirect_url = ''
+    if request.GET.get('ctrl', None):
+        transaction.data['ctrl'] = request.GET['ctrl']
+        transaction.payment_processor.update_transaction_status(transaction,
+                                                                "pending")
+        redirect_url = transaction.success_url
+    else:
+        error = request.GET.get('err', None) or 'Unknown error'
+        transaction.data['err'] = error
 
-    return HttpResponseRedirect(settings.PAYU_SUCCESSFUL_TRANSACTION_CALLBACK)
+        transaction.payment_processor.update_transaction_status(transaction,
+                                                                "failed")
+        redirect_url = transaction.failed_url
 
-
-@csrf_exempt
-def failed_transaction(request, transaction_uuid):
-    try:
-        uuid = UUID(transaction_uuid, version=4)
-    except ValueError:
-        raise Http404
-
-    transaction = get_object_or_404(Transaction, uuid=uuid)
-
-    if not transaction.can_be_consumed:
-        return HttpResponseGone("The transaction is no longer available.")
-
-    transaction.last_access = timezone.now()
-    transaction.save()
-
-    transaction.payment_processor.update_transaction_status(transaction,
-                                                            "failed")
-
-    return HttpResponseRedirect(settings.PAYU_FAILED_TRANSACTION_CALLBACK)
+    return HttpResponseRedirect(redirect_url)
