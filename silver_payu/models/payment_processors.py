@@ -45,7 +45,7 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
 
         if form.is_valid():
             form = PayUTransactionForm(payment_method=transaction.payment_method,
-                                       transaction=transaction,
+                                       transaction=transaction, request=request,
                                        billing_details=form.to_payu_billing())
 
         return form
