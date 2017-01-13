@@ -61,6 +61,7 @@ class PayUBillingForm(GenericTransactionForm):
     first_name = forms.CharField()
     last_name = forms.CharField()
     phone = forms.CharField()
+    city = forms.CharField()
     country = forms.ChoiceField(choices=countries)
     fiscal_code = forms.CharField(required=False)
 
@@ -79,6 +80,7 @@ class PayUBillingForm(GenericTransactionForm):
             'BILL_LNAME': data['last_name'],
             'BILL_EMAIL': data['email'],
             'BILL_PHONE': data['phone'],
+            'BILL_CITY': data['city'],
             'BILL_COUNTRYCODE': data['country'],
             'BILL_FISCALCODE': data['fiscal_code']
         }
@@ -91,7 +93,8 @@ class PayUBillingForm(GenericTransactionForm):
             'last_name': billing_name[1] if len(billing_name) > 1 else '',
             'email': customer.emails[0] or '',
             'phone': customer.phone or '',
-            'country': customer.country
+            'country': customer.country,
+            'city': customer.city
         }
 
         if customer.sales_tax_number:

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 
 from django_fsm import TransitionNotAllowed
 
@@ -44,6 +45,16 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
                                data=request.POST)
 
         if form.is_valid():
+            if not transaction.payment_method.archived_customer:
+                address = "{} {}".format(transaction.document.customer.address_1,
+                                         transaction.document.customer.address_2)
+
+                archived_customer = form.to_payu_billing()
+                archived_customer['BILL_ADDRESS'] = address
+
+                transaction.payment_method.archived_customer = archived_customer
+                transaction.payment_method.save()
+
             form = PayUTransactionForm(payment_method=transaction.payment_method,
                                        transaction=transaction, request=request,
                                        billing_details=form.to_payu_billing())
@@ -88,27 +99,39 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
 
     def _charge_transaction(self, transaction):
         token = transaction.payment_method.token
-        billing_name = transaction.document.customer.billing_name.split()
-        address = "{} {}".format(transaction.document.customer.address1,
-                                 transaction.document.customer.address2)
 
-        print transaction.document.customer.emails
-        print transaction.document.customer.emails[0]
+        billing_details = transaction.payment_method.archived_customer
+        delivery_details = {
+            "DELIVERY_ADDRESS": billing_details["BILL_ADDRESS"],
+            "DELIVERY_CITY": billing_details["BILL_CITY"],
+            "DELIVERY_EMAIL": billing_details["BILL_EMAIL"],
+            "DELIVERY_FNAME": billing_details["BILL_FNAME"],
+            "DELIVERY_LNAME": billing_details["BILL_LNAME"],
+            "DELIVERY_PHONE": billing_details["BILL_PHONE"]
+        }
+        payment_details = {
+            "AMOUNT": str(transaction.amount),
+            # "CURRENCY": transaction.currency,
+            "CURRENCY": "RON",
+            "EXTERNAL_REF": str(transaction.uuid)
+        }
+        payment_details.update(billing_details)
+        payment_details.update(delivery_details)
 
-        payment = TokenPayment({
-            "AMOUNT": transaction.amount,
-            "CURRENCY": transaction.currency,
-            "BILL_ADDRESS": address,
-            "BILL_CITY": transaction.document.customer.city,
-            "BILL_EMAIL": transaction.document.customer.emails[0],
-            "BILL_FNAME": billing_name[0],
-            "BILL_LNAME": billing_name[1],
-            "BILL_PHONE": "+40000000000",
-            "EXTERNAL_REF": str(transaction.uuid),
-        }, token)
+        payment = TokenPayment(payment_details, token)
         result = payment.pay()
 
-        print result
+        try:
+            if json.loads(result)["code"] != 0:
+                self.update_transaction_status(transaction, "pending")
+            else:
+                self.update_transaction_status(transaction, "failed")
+                self.transaction.data["result"] = result
+                return False
+        except Exception as e:
+            self.update_transaction_status(transaction, "failed")
+            self.transaction.data["result"] = str(e)
+            return False
 
         return True
 
@@ -125,4 +148,5 @@ def payu_token_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.ipn.REFNOEXT)
 
     transaction.payment_method.token = sender.IPN_CC_TOKEN
+    transaction.payment_method.verified = True
     transaction.payment_method.save()

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 
 from django_fsm import transition
 
@@ -28,6 +29,14 @@ class PayUPaymentMethod(PaymentMethod):
     @token.setter
     def token(self, value):
         self.data['token'] = self.encrypt_data(value)
+
+    @property
+    def archived_customer(self):
+        return json.loads(self.decrypt_data(self.data.get('archived_customer', '')) or '{}')
+
+    @archived_customer.setter
+    def archived_customer(self, value):
+        self.data['archived_customer'] = self.encrypt_data(json.dumps(value))
 
     @property
     def public_data(self):
