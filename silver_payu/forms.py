@@ -1,15 +1,23 @@
+from datetime import datetime
+
+import pytz
+
 from payu.forms import PayULiveUpdateForm
 
+from django import forms
 from rest_framework.reverse import reverse
 
 from silver.forms import GenericTransactionForm
+from silver.utils.international import countries
 
 
 class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
-    def __init__(self, payment_method, transaction,
+    def __init__(self, payment_method, transaction, billing_details,
                  request=None, *args, **kwargs):
 
         kwargs['initial'] = self._build_form_body(transaction, request)
+        kwargs['initial'].update(billing_details)
+
         super(PayUTransactionForm, self).__init__(payment_method,
                                                   transaction,
                                                   request, **kwargs)
@@ -17,17 +25,15 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
     def _build_form_body(self, transaction, request):
         form_body = {
             'ORDER_REF': transaction.uuid,
-            'ORDER_DATE': '2017-01-06 17:12:40',
+            'ORDER_DATE':  datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'),
             'PRICES_CURRENCY': transaction.currency,
             'CURRENCY': transaction.currency,
             'PAY_METHOD': 'CCVISAMC',
             'AUTOMODE': '1',
             'LU_ENABLE_TOKEN': '1',
-            'TESTORDER': 'TRUE',
             'BACK_REF': self._get_callback_url(transaction, request),
             'ORDER': self._get_order(transaction)
         }
-        form_body.update(self._get_billing_details(transaction.document.customer))
 
         return form_body
 
@@ -48,18 +54,46 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
             'VAT': document.sales_tax_percent or '0'
         }]
 
-    def _get_billing_details(self, customer):
+
+class PayUBillingForm(GenericTransactionForm):
+    email = forms.EmailField()
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    phone = forms.CharField()
+    country = forms.ChoiceField(choices=countries)
+    fiscal_code = forms.CharField(required=False)
+
+    def __init__(self, payment_method, transaction,
+                 request=None, data=None, *args, **kwargs):
+
+        if not data:
+            data = self._build_form_body(payment_method.customer)
+
+        super(PayUBillingForm, self).__init__(payment_method, transaction,
+                                              request, data, **kwargs)
+    def to_payu_billing(self):
+        data = self.cleaned_data
+        return {
+            'BILL_FNAME': data['first_name'],
+            'BILL_LNAME': data['last_name'],
+            'BILL_EMAIL': data['email'],
+            'BILL_PHONE': data['phone'],
+            'BILL_COUNTRYCODE': data['country'],
+            'BILL_FISCALCODE': data['fiscal_code']
+        }
+
+    def _build_form_body(self, customer):
         billing_name = customer.billing_name.split()
 
-        billing_details = {
-            'BILL_FNAME': billing_name[0],
-            'BILL_LNAME': billing_name[1] if len(billing_name) > 1 else '',
-            'BILL_COUNTRYCODE': customer.country,
-            'BILL_EMAIL': customer.emails[0],
-            'BILL_PHONE': ''
+        form_body = {
+            'first_name': billing_name[0],
+            'last_name': billing_name[1] if len(billing_name) > 1 else '',
+            'email': customer.emails[0] or '',
+            'phone': customer.phone or '',
+            'country': customer.country
         }
 
         if customer.sales_tax_number:
-            billing_details['BILL_FISCALCODE'] = customer.sales_tax_number
+            form_body['fiscal_code'] = customer.sales_tax_number
 
-        return billing_details
+        return form_body

@@ -18,7 +18,7 @@ from django_fsm import TransitionNotAllowed
 
 from django.conf import settings
 from django.http import (HttpResponseRedirect, HttpResponseBadRequest,
-                         Http404, HttpResponseGone)
+                         Http404, HttpResponseGone, HttpResponse)
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET
@@ -29,7 +29,8 @@ from silver.models.transactions import Transaction
 
 
 class PayUTransactionView(GenericTransactionView):
-    pass
+    def post(self, request):
+        return HttpResponse(self.render_template())
 
 
 @require_GET
@@ -48,7 +49,7 @@ def process_transaction(request, transaction_uuid):
     transaction.last_access = timezone.now()
     transaction.save()
 
-    redirect_url = ''
+    edirect_url = ''
     if request.GET.get('ctrl', None):
         transaction.data['ctrl'] = request.GET['ctrl']
         transaction.payment_processor.update_transaction_status(transaction,

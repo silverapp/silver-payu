@@ -17,7 +17,9 @@ from django_fsm import TransitionNotAllowed
 from django.utils import timezone
 from django.dispatch import receiver
 
-from payu.signals import payment_authorized, alu_payment_created
+from payu.payments import TokenPayment
+from payu.signals import payment_authorized, alu_token_created
+
 from silver.models import Transaction
 from silver.models.payment_processors.base import PaymentProcessorBase
 from silver.models.payment_processors.mixins import TriggeredProcessorMixin
@@ -25,7 +27,7 @@ from silver.models.payment_processors.mixins import TriggeredProcessorMixin
 from .payment_methods import PayUPaymentMethod
 
 from ..views import PayUTransactionView
-from ..forms import PayUTransactionForm
+from ..forms import PayUTransactionForm, PayUBillingForm
 
 
 class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
@@ -35,6 +37,18 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
     transaction_view_class = PayUTransactionView
 
     _has_been_setup = False
+
+    def get_form(self, transaction, request):
+        form = PayUBillingForm(payment_method=transaction.payment_method,
+                               transaction=transaction, request=request,
+                               data=request.POST)
+
+        if form.is_valid():
+            form = PayUTransactionForm(payment_method=transaction.payment_method,
+                                       transaction=transaction,
+                                       billing_details=form.to_payu_billing())
+
+        return form
 
     def refund_transaction(self, transaction, payment_method=None):
         pass
@@ -70,9 +84,31 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
                                      transaction.States.Pending]:
             return False
 
-        # TODO: decrypt token
-        # TODO: send token request to payu
-        # TODO: change transaction to pending
+        return self._charge_transaction(transaction)
+
+    def _charge_transaction(self, transaction):
+        token = transaction.payment_method.token
+        billing_name = transaction.document.customer.billing_name.split()
+        address = "{} {}".format(transaction.document.customer.address1,
+                                 transaction.document.customer.address2)
+
+        print transaction.document.customer.emails
+        print transaction.document.customer.emails[0]
+
+        payment = TokenPayment({
+            "AMOUNT": transaction.amount,
+            "CURRENCY": transaction.currency,
+            "BILL_ADDRESS": address,
+            "BILL_CITY": transaction.document.customer.city,
+            "BILL_EMAIL": transaction.document.customer.emails[0],
+            "BILL_FNAME": billing_name[0],
+            "BILL_LNAME": billing_name[1],
+            "BILL_PHONE": "+40000000000",
+            "EXTERNAL_REF": str(transaction.uuid),
+        }, token)
+        result = payment.pay()
+
+        print result
 
         return True
 
@@ -85,6 +121,8 @@ def payu_ipn_received(sender, **kwargs):
 
 
 @receiver(alu_token_created)
-def payu_ipn_received(sender, **kwargs):
+def payu_token_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.ipn.REFNOEXT)
-    # TODO: set token
+
+    transaction.payment_method.token = sender.IPN_CC_TOKEN
+    transaction.payment_method.save()
