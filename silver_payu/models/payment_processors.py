@@ -77,10 +77,10 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
             elif status == "settle":
                 transaction.settle()
         except TransitionNotAllowed as e:
-            # TODO handle this (probably throw something else)
-            pass
+            return False
 
         transaction.save()
+        return True
 
     def execute_transaction(self, transaction):
         """
@@ -91,8 +91,8 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         if not transaction.payment_processor == self:
             return False
 
-        if transaction.state not in [transaction.States.Initial,
-                                     transaction.States.Pending]:
+        if transaction.state not in [Transaction.States.Initial,
+                                     Transaction.States.Pending]:
             return False
 
         return self._charge_transaction(transaction)

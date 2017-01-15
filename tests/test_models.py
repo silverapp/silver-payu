@@ -2,7 +2,7 @@ import pytest
 from mock import MagicMock
 from django_dynamic_fixture import G
 
-from silver.models import Transaction
+from silver.models import Transaction, Proforma, Invoice
 
 from silver_payu.models import PayUPaymentMethod, PayUTriggered
 from silver_payu.forms import PayUBillingForm, PayUTransactionForm
@@ -63,12 +63,39 @@ def test_payment_processor_get_form(data, form_class, archived_customer):
     (Transaction.States.Initial, "pending", Transaction.States.Pending),
     (Transaction.States.Initial, "failed", Transaction.States.Failed),
     (Transaction.States.Pending, "settle", Transaction.States.Settled),
-    (Transaction.States.Settled, "pending", Transaction.States.Settled),
+    (Transaction.States.Settled, "pending", Transaction.States.Settled)
 ])
 def test_update_transaction(initial_state, status, asserted_state):
-    transaction = G(Transaction, state=initial_state)
+    document = G(Invoice, state=Invoice.STATES.ISSUED)
+    document.pay = lambda : ''
+    transaction = G(Transaction, state=initial_state, invoice=document)
 
     PayUTriggered().update_transaction_status(transaction, status)
     transaction.refresh_from_db()
 
     assert transaction.state == asserted_state
+
+
+@pytest.mark.django_db
+def test_execute_transaction_wrong_payment_processor():
+    assert not PayUTriggered().execute_transaction(G(Transaction))
+
+
+@pytest.mark.django_db
+def test_execute_transaction_wrong_transaction_state():
+    payment_processor = PayUTriggered()
+    payment_processor._charge_transaction = lambda x: True
+
+    transaction = MagicMock(payment_processor=payment_processor,
+                            state=Transaction.States.Settled)
+    assert not payment_processor.execute_transaction(transaction)
+
+
+@pytest.mark.django_db
+def test_execute_transaction_happy_path():
+    payment_processor = PayUTriggered()
+    payment_processor._charge_transaction = lambda x: True
+
+    transaction = MagicMock(payment_processor=payment_processor,
+                            state=Transaction.States.Initial)
+    assert payment_processor.execute_transaction(transaction)
