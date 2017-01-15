@@ -52,8 +52,23 @@ def test_payment_method_data_set():
 ])
 def test_payment_processor_get_form(data, form_class, archived_customer):
     transaction = G(Transaction, payment_method=G(PayUPaymentMethod))
-
     form = PayUTriggered().get_form(transaction, MagicMock(POST=data))
-    assert isinstance(form, form_class)
 
+    assert isinstance(form, form_class)
     assert transaction.payment_method.archived_customer == archived_customer
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('initial_state, status, asserted_state', [
+    (Transaction.States.Initial, "pending", Transaction.States.Pending),
+    (Transaction.States.Initial, "failed", Transaction.States.Failed),
+    (Transaction.States.Pending, "settle", Transaction.States.Settled),
+    (Transaction.States.Settled, "pending", Transaction.States.Settled),
+])
+def test_update_transaction(initial_state, status, asserted_state):
+    transaction = G(Transaction, state=initial_state)
+
+    PayUTriggered().update_transaction_status(transaction, status)
+    transaction.refresh_from_db()
+
+    assert transaction.state == asserted_state
