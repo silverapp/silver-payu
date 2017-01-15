@@ -1,0 +1,7 @@
+[run]
+omit =
+	tests/*
+	silver_payu/migrations/*
+	silver_payu/__init__.py
+	silver_payu/models/__init__.py
+	silver_payu/urls.py

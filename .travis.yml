@@ -6,4 +6,4 @@ cache: pip
 install:
   - pip install -U -r requirements.test.txt
 script:
-  - pytest --cov-report term-missing --cov=payu tests/
+  - pytest --cov-report term-missing --cov=silver_payu tests/

@@ -32,12 +32,10 @@ class PayUPaymentMethod(PaymentMethod):
 
     @property
     def archived_customer(self):
-        return json.loads(self.decrypt_data(self.data.get('archived_customer', '')) or '{}')
+        raw_customer = self.data.get('archived_customer', '{}')
+        return json.loads(self.decrypt_data(raw_customer))
 
     @archived_customer.setter
     def archived_customer(self, value):
-        self.data['archived_customer'] = self.encrypt_data(json.dumps(value))
-
-    @property
-    def public_data(self):
-        return self.data.get('details')
+        raw_customer = json.dumps(value)
+        self.data['archived_customer'] = self.encrypt_data(raw_customer)

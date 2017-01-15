@@ -20,7 +20,6 @@ from django.conf import settings
 
 settings.configure(
     DEBUG=True,
-    ROOT_URLCONF='payu.urls',
     DATABASES={
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -32,8 +31,13 @@ settings.configure(
                     'django.contrib.contenttypes',
                     'django.contrib.sessions',
                     'django.contrib.admin',
-                    'payu',)
+                    'silver_payu',),
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
 )
-
 
 django.setup()
