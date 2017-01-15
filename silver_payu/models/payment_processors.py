@@ -111,8 +111,7 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         }
         payment_details = {
             "AMOUNT": str(transaction.amount),
-            # "CURRENCY": transaction.currency,
-            "CURRENCY": "RON",
+            "CURRENCY": str(transaction.currency),
             "EXTERNAL_REF": str(transaction.uuid)
         }
         payment_details.update(billing_details)
@@ -122,18 +121,17 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         result = payment.pay()
 
         try:
-            if json.loads(result)["code"] != 0:
+            if not json.loads(result)["code"]:
                 self.update_transaction_status(transaction, "pending")
+                return True
             else:
                 self.update_transaction_status(transaction, "failed")
                 self.transaction.data["result"] = result
-                return False
         except Exception as e:
             self.update_transaction_status(transaction, "failed")
             self.transaction.data["result"] = str(e)
-            return False
 
-        return True
+        return False
 
 
 @receiver(payment_authorized)

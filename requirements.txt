@@ -1,2 +1,2 @@
-django-silver
+git+https://git@github.com/silverapp/silver.git@small-fixes-after-integration#egg=silver
 django-payu-ro==1.0.0-rc1
