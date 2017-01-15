@@ -25,10 +25,10 @@ from silver.models import Transaction
 from silver.models.payment_processors.base import PaymentProcessorBase
 from silver.models.payment_processors.mixins import TriggeredProcessorMixin
 
-from .payment_methods import PayUPaymentMethod
-
 from ..views import PayUTransactionView
 from ..forms import PayUTransactionForm, PayUBillingForm
+
+from .payment_methods import PayUPaymentMethod
 
 
 class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):

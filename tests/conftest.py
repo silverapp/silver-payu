@@ -27,10 +27,18 @@ settings.configure(
     },
     PAYU_MERCHANT='PAYUDEMO',
     PAYU_KEY='1231234567890123',
+    PAYMENT_METHOD_SECRET=b'MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=',
+    PAYMENT_PROCESSORS={
+        'silver_payu.PayUTriggered': {
+            'display_name': 'PayU',
+            'setup_data': {}
+        }
+    },
     INSTALLED_APPS=('django.contrib.auth',
                     'django.contrib.contenttypes',
                     'django.contrib.sessions',
                     'django.contrib.admin',
+                    'silver',
                     'silver_payu',),
     CACHES = {
         'default': {
