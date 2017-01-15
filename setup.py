@@ -36,7 +36,7 @@ setup(
     name="silver-payu",
     version=silver_payu.__version__,
     description=read('DESCRIPTION'),
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     license='Apache 2.0',
     platforms=['OS Independent'],
     keywords='django, app, reusable, billing, invoicing, api',
