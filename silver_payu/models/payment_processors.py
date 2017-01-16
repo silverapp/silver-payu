@@ -101,6 +101,8 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         token = transaction.payment_method.token
 
         billing_details = transaction.payment_method.archived_customer
+        # TODO: check if customer is valid
+
         delivery_details = {
             "DELIVERY_ADDRESS": billing_details["BILL_ADDRESS"],
             "DELIVERY_CITY": billing_details["BILL_CITY"],
@@ -109,6 +111,9 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
             "DELIVERY_LNAME": billing_details["BILL_LNAME"],
             "DELIVERY_PHONE": billing_details["BILL_PHONE"]
         }
+
+        # TODO: check why USD is not a valid currency
+        # TODO: try to create a RON payment
         payment_details = {
             "AMOUNT": str(transaction.amount),
             "CURRENCY": str(transaction.currency),
@@ -118,18 +123,26 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         payment_details.update(delivery_details)
 
         payment = TokenPayment(payment_details, token)
+
+        # TODO: handle connection failing
         result = payment.pay()
 
+        return self._parse_result(transaction, result)
+
+    def _parse_result(self, transaction, result):
         try:
-            if not json.loads(result)["code"]:
+            # TODO: return json from django-payu-ro
+            if not int(json.loads(result)["code"]):
                 self.update_transaction_status(transaction, "pending")
                 return True
             else:
                 self.update_transaction_status(transaction, "failed")
-                self.transaction.data["result"] = result
+                transaction.data["result"] = result
         except Exception as e:
             self.update_transaction_status(transaction, "failed")
-            self.transaction.data["result"] = str(e)
+            transaction.data["result"] = str(e)
+
+        transaction.save()
 
         return False
 
