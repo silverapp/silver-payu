@@ -18,7 +18,7 @@
 import os
 from setuptools import setup, find_packages
 
-import silver_payu
+__version__ = '0.1.0'
 
 install_requires = [line.strip()
                     for line in open("requirements.txt").readlines()
@@ -34,7 +34,7 @@ def read(fname):
 
 setup(
     name="silver-payu",
-    version=silver_payu.__version__,
+    version=__version__,
     description=read('DESCRIPTION'),
     long_description=read('README.md'),
     license='Apache 2.0',
