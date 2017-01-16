@@ -40,6 +40,7 @@ settings.configure(
                     'django.contrib.admin',
                     'silver',
                     'silver_payu',),
+    ROOT_URLCONF='silver_payu.urls',
     CACHES={
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

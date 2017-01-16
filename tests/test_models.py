@@ -55,7 +55,8 @@ def test_payment_method_data_set():
     })
 ])
 def test_payment_processor_get_form(data, form_class, archived_customer):
-    transaction = G(Transaction, payment_method=G(PayUPaymentMethod))
+    transaction = G(Transaction, payment_method=G(PayUPaymentMethod),
+                    address_1='9', address_2='9')
     form = PayUTriggered().get_form(transaction, MagicMock(POST=data))
 
     assert isinstance(form, form_class)

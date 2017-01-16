@@ -24,7 +24,7 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
 
     def _build_form_body(self, transaction, request):
         form_body = {
-            'ORDER_REF': transaction.uuid,
+            'ORDER_REF': str(transaction.uuid),
             'ORDER_DATE':  datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'),
             'PRICES_CURRENCY': transaction.currency,
             'CURRENCY': transaction.currency,
@@ -50,9 +50,9 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
         return [{
             'PNAME': product_name,
             'PCODE': '{}-{}'.format(document.series, document.number),
-            'PRICE': transaction.amount,
+            'PRICE': str(transaction.amount),
             'PRICE_TYPE': 'GROSS',
-            'VAT': document.sales_tax_percent or '0'
+            'VAT': str(document.sales_tax_percent) or '0'
         }]
 
 
