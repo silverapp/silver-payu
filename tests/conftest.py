@@ -40,7 +40,7 @@ settings.configure(
                     'django.contrib.admin',
                     'silver',
                     'silver_payu',),
-    CACHES = {
+    CACHES={
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'unique-snowflake',
