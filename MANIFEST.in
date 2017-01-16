@@ -1,0 +1,7 @@
+include LICENSE
+include README.md
+recursive-include silver_payu/templates *
+include requirements.test.txt
+include requirements.txt
+graft silver_payu
+global-exclude *.orig *.pyc *.log *.swp
