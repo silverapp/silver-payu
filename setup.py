@@ -45,6 +45,7 @@ setup(
     url='https://github.com/silverapp/silver-payu',
     packages=find_packages(),
     include_package_data=True,
+    dependency_links = ['http://github.com/silverapp/silver/tarball/master#egg=silver'],
     install_requires=install_requires,
     classifiers=[
         'Environment :: Web Environment',
