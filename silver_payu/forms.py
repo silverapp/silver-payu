@@ -38,7 +38,7 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
         return form_body
 
     def _get_callback_url(self, transaction, request):
-        return reverse('process-transaction',
+        return reverse('initialize-transaction',
                        kwargs={'transaction_uuid': str(transaction.uuid)},
                        request=request)
 

@@ -17,14 +17,7 @@ from django.conf.urls import include, url, patterns
 
 from silver.views import pay_transaction_view
 
-from .views import process_transaction
 
-
-urlpatterns = [
-    url(r'(?P<transaction_uuid>[0-9a-z-]+)/proccess$',
-        process_transaction, name='process-transaction'),
-]
-
-urlpatterns += patterns('',
+urlpatterns = patterns('',
     (r'^', include('payu.urls')),
 )
