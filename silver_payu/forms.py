@@ -91,7 +91,7 @@ class PayUBillingForm(GenericTransactionForm):
         form_body = {
             'first_name': billing_name[0],
             'last_name': billing_name[1] if len(billing_name) > 1 else '',
-            'email': customer.emails[0] or '',
+            'email': customer.email or '',
             'phone': customer.phone or '',
             'country': customer.country,
             'city': customer.city
