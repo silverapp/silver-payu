@@ -67,21 +67,17 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
     def void_transaction(self, transaction, payment_method=None):
         pass
 
-    def was_transaction_initialized(self, transaction, request):
+    def handle_transaction_response(self, transaction, request):
         if request.GET.get('ctrl', None):
             transaction.data['ctrl'] = request.GET['ctrl']
             transaction.payment_processor.update_transaction_status(transaction,
                                                                     "pending")
-            transaction.save()
-            return True
-
-        error = request.GET.get('err', None) or 'Unknown error'
-        transaction.data['error'] = error
-
-        transaction.payment_processor.update_transaction_status(transaction,
-                                                                "failed")
+        else:
+            error = request.GET.get('err', None) or 'Unknown error'
+            transaction.data['error'] = error
+            transaction.payment_processor.update_transaction_status(transaction,
+                                                                    "failed")
         transaction.save()
-        return False
 
     def update_transaction_status(self, transaction, status):
         try:
