@@ -8,6 +8,7 @@ from django import forms
 from rest_framework.reverse import reverse
 
 from silver.forms import GenericTransactionForm
+from silver.utils.payments import get_payment_complete_url
 from silver.utils.international import countries
 
 
@@ -31,16 +32,11 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
             'PAY_METHOD': 'CCVISAMC',
             'AUTOMODE': '1',
             'LU_ENABLE_TOKEN': '1',
-            'BACK_REF': self._get_callback_url(transaction, request),
+            'BACK_REF': get_payment_complete_url(transaction, request),
             'ORDER': self._get_order(transaction)
         }
 
         return form_body
-
-    def _get_callback_url(self, transaction, request):
-        return reverse('initialize-transaction',
-                       kwargs={'transaction_uuid': str(transaction.uuid)},
-                       request=request)
 
     def _get_order(self, transaction):
         document = transaction.document
