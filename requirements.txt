@@ -1,2 +1,2 @@
-# git+git://git@github.com/silverapp/silver.git@master#egg=silver
+git+git://git@github.com/silverapp/silver.git@initialize-transaction#egg=silver
 django-payu-ro==1.0.0-rc1
