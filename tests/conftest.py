@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+import datetime
 
 import django
 from django.conf import settings
@@ -34,12 +35,16 @@ settings.configure(
             'setup_data': {}
         }
     },
+    SILVER_PAYMENT_TOKEN_EXPIRATION=datetime.timedelta(minutes=5),
     INSTALLED_APPS=('django.contrib.auth',
                     'django.contrib.contenttypes',
                     'django.contrib.sessions',
                     'django.contrib.admin',
                     'silver',
-                    'silver_payu',),
+                    'silver_payu',
+                    'dal',
+                    'dal_select2',
+                    ),
     ROOT_URLCONF='silver_payu.urls',
     CACHES={
         'default': {

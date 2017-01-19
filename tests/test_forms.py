@@ -19,23 +19,28 @@ def test_payu_transaction_form_build_body(mocked_datetime):
 
     transaction = G(Transaction)
     payment_method = G(PayUPaymentMethod)
-    form = PayUTransactionForm(payment_method, transaction, {})
 
-    assert form._build_form_body(transaction, None) == {
-        'AUTOMODE': '1',
-        'BACK_REF': u'/%s/proccess' % transaction.uuid,
-        'CURRENCY': 'USD',
-        'LU_ENABLE_TOKEN': '1',
-        'ORDER': [{'PCODE': '%s-%s' % (transaction.document.series,
-                                       transaction.document.number),
-                   'PNAME': 'Payment for %s %s-%s' % (transaction.document.kind,
-                                                      transaction.document.series,
-                                                      transaction.document.number),
-                   'PRICE': str(transaction.amount),
-                   'PRICE_TYPE': 'GROSS',
-                   'VAT': str(transaction.sales_tax_percent)}],
-        'ORDER_DATE': 'order_date',
-        'ORDER_REF': '%s' % transaction.uuid,
-        'PAY_METHOD': 'CCVISAMC',
-        'PRICES_CURRENCY': 'USD'
-    }
+
+    with patch('silver.utils.payments._get_jwt_token') as mocked_token:
+        mocked_token.return_value = 'token'
+
+        form = PayUTransactionForm(payment_method, transaction, {})
+
+        assert form._build_form_body(transaction, None) == {
+            'AUTOMODE': '1',
+            'BACK_REF': '/pay/token/complete',
+            'CURRENCY': 'USD',
+            'LU_ENABLE_TOKEN': '1',
+            'ORDER': [{'PCODE': '%s-%s' % (transaction.document.series,
+                                           transaction.document.number),
+                       'PNAME': 'Payment for %s %s-%s' % (transaction.document.kind,
+                                                          transaction.document.series,
+                                                          transaction.document.number),
+                       'PRICE': str(transaction.amount),
+                       'PRICE_TYPE': 'GROSS',
+                       'VAT': str(transaction.document.sales_tax_percent)}],
+            'ORDER_DATE': 'order_date',
+            'ORDER_REF': '%s' % transaction.uuid,
+            'PAY_METHOD': 'CCVISAMC',
+            'PRICES_CURRENCY': 'USD'
+        }

@@ -3,7 +3,7 @@ from faker import Faker
 from mock import MagicMock, patch
 from django_dynamic_fixture import G
 
-from silver.models import Transaction, Proforma, Invoice
+from silver.models import Transaction, Proforma, Invoice, Customer
 
 from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
                                 payu_ipn_received, payu_token_received)
@@ -56,7 +56,8 @@ def test_payment_method_data_set():
 ])
 def test_payment_processor_get_form(data, form_class, archived_customer):
     transaction = G(Transaction, payment_method=G(PayUPaymentMethod),
-                    address_1='9', address_2='9')
+                    invoice=G(Invoice,
+                              customer=G(Customer, address_1='9', address_2='9')))
     form = PayUTriggered().get_form(transaction, MagicMock(POST=data))
 
     assert isinstance(form, form_class)

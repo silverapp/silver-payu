@@ -15,9 +15,14 @@
 
 from django.conf.urls import include, url, patterns
 
-from silver.views import pay_transaction_view
+from silver.views import pay_transaction_view, complete_payment_view
 
 
 urlpatterns = patterns('',
     (r'^', include('payu.urls')),
+
+    url(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/$',
+        pay_transaction_view, name='payment'),
+    url(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/complete$',
+        complete_payment_view, name='payment-complete'),
 )
