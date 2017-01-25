@@ -1,15 +1,13 @@
 import pytest
-from faker import Faker
 from mock import MagicMock, patch
 from django_dynamic_fixture import G
 
-from silver.models import Transaction, Proforma, Invoice
+from silver.models import (Transaction, Proforma, Invoice, Customer,
+                           PaymentProcessorManager)
 
 from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
                                 payu_ipn_received, payu_token_received)
-from silver_payu.forms import PayUBillingForm, PayUTransactionForm
-
-faker = Faker()
+from silver_payu.forms import PayUTransactionFormBase
 
 
 @pytest.mark.django_db
@@ -17,20 +15,27 @@ faker = Faker()
 def test_payu_transaction_form_build_body(mocked_datetime):
     mocked_datetime.now.return_value.strftime.return_value = 'order_date'
 
-    transaction = G(Transaction)
-    payment_method = G(PayUPaymentMethod)
-
+    customer = G(Customer, currency='RON')
+    payment_processor = PaymentProcessorManager.get_instance('payu_triggered')
+    payment_method = G(PayUPaymentMethod, customer=customer,
+                       payment_processor=payment_processor)
+    proforma = G(Proforma, state=Invoice.STATES.ISSUED, customer=customer,
+                 transaction_currency='RON')
+    invoice = G(Invoice, proforma=proforma, state=Invoice.STATES.ISSUED,
+                customer=customer, transaction_currency='RON')
+    transaction = G(Transaction, invoice=invoice, proforma=proforma,
+                    amount=invoice.total,
+                    payment_method=payment_method, currency='RON')
 
     with patch('silver.utils.payments._get_jwt_token') as mocked_token:
         mocked_token.return_value = 'token'
 
-        form = PayUTransactionForm(payment_method, transaction, {})
+        form = PayUTransactionFormBase(payment_method, transaction, {})
 
         assert form._build_form_body(transaction, None) == {
             'AUTOMODE': '1',
             'BACK_REF': '/pay/token/complete',
-            'CURRENCY': 'USD',
-            'LU_ENABLE_TOKEN': '1',
+            'CURRENCY': 'RON',
             'ORDER': [{'PCODE': '%s-%s' % (transaction.document.series,
                                            transaction.document.number),
                        'PNAME': 'Payment for %s %s-%s' % (transaction.document.kind,
@@ -42,5 +47,5 @@ def test_payu_transaction_form_build_body(mocked_datetime):
             'ORDER_DATE': 'order_date',
             'ORDER_REF': '%s' % transaction.uuid,
             'PAY_METHOD': 'CCVISAMC',
-            'PRICES_CURRENCY': 'USD'
+            'PRICES_CURRENCY': 'RON'
         }

@@ -31,7 +31,11 @@ settings.configure(
     PAYMENT_METHOD_SECRET=b'MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=',
     PAYMENT_PROCESSORS={
         'silver_payu.PayUTriggered': {
-            'display_name': 'PayU',
+            'display_name': 'PayU - Triggered',
+            'setup_data': {}
+        },
+        'silver_payu.PayURecurring': {
+            'display_name': 'PayU - Recurring',
             'setup_data': {}
         }
     },

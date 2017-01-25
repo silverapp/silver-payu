@@ -7,7 +7,7 @@ from silver.models import Transaction, Proforma, Invoice, Customer
 
 from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
                                 payu_ipn_received, payu_token_received)
-from silver_payu.forms import PayUBillingForm, PayUTransactionForm
+from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 
 faker = Faker()
 
@@ -43,7 +43,7 @@ def test_payment_method_data_set():
         'country': 'RO',
         'city': 'Timisoara',
         'fiscal_code': ''
-    }, PayUTransactionForm, {
+    }, PayUTransactionFormBase, {
         'BILL_ADDRESS': '9 9',
         'BILL_CITY': 'Timisoara',
         'BILL_COUNTRYCODE': 'RO',

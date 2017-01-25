@@ -35,6 +35,7 @@ from .payment_methods import PayUPaymentMethod
 class PayUBase(PaymentProcessorBase, TriggeredProcessorMixin):
     payment_method_class = PayUPaymentMethod
     transaction_view_class = PayUTransactionView
+    allowed_currencies = ('RON', )
 
     _has_been_setup = False
 
