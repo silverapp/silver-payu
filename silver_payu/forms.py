@@ -12,14 +12,16 @@ from silver.utils.payments import get_payment_complete_url
 from silver.utils.international import countries
 
 
-class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
+class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
+    recurring = None
+
     def __init__(self, payment_method, transaction, billing_details,
                  request=None, *args, **kwargs):
 
         kwargs['initial'] = self._build_form_body(transaction, request)
         kwargs['initial'].update(billing_details)
 
-        super(PayUTransactionForm, self).__init__(payment_method,
+        super(PayUTransactionFormBase, self).__init__(payment_method,
                                                   transaction,
                                                   request, **kwargs)
 
@@ -31,10 +33,11 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
             'CURRENCY': transaction.currency,
             'PAY_METHOD': 'CCVISAMC',
             'AUTOMODE': '1',
-            'LU_ENABLE_TOKEN': '1',
             'BACK_REF': get_payment_complete_url(transaction, request),
             'ORDER': self._get_order(transaction)
         }
+        if self.recurring:
+            form_body['LU_ENABLE_TOKEN'] = '1'
 
         return form_body
 
@@ -52,6 +55,14 @@ class PayUTransactionForm(GenericTransactionForm, PayULiveUpdateForm):
         }]
 
 
+class PayUTransactionFormTriggered(PayUTransactionFormBase):
+    recurring = False
+
+
+class PayUTransactionFormRecurring(PayUTransactionFormBase):
+    recurring = True
+
+
 class PayUBillingForm(GenericTransactionForm):
     email = forms.EmailField()
     first_name = forms.CharField()
@@ -59,7 +70,6 @@ class PayUBillingForm(GenericTransactionForm):
     phone = forms.CharField()
     city = forms.CharField()
     country = forms.ChoiceField(choices=countries)
-    fiscal_code = forms.CharField(required=False)
 
     def __init__(self, payment_method, transaction,
                  request=None, data=None, *args, **kwargs):
@@ -77,8 +87,7 @@ class PayUBillingForm(GenericTransactionForm):
             'BILL_EMAIL': data['email'],
             'BILL_PHONE': data['phone'],
             'BILL_CITY': data['city'],
-            'BILL_COUNTRYCODE': data['country'],
-            'BILL_FISCALCODE': data['fiscal_code']
+            'BILL_COUNTRYCODE': data['country']
         }
 
     def _build_form_body(self, customer):
@@ -87,7 +96,7 @@ class PayUBillingForm(GenericTransactionForm):
         form_body = {
             'first_name': billing_name[0],
             'last_name': billing_name[1] if len(billing_name) > 1 else '',
-            'email': '',
+            'email': customer.email,
             'phone': customer.phone or '',
             'country': customer.country,
             'city': customer.city

@@ -26,14 +26,13 @@ from silver.models.payment_processors.base import PaymentProcessorBase
 from silver.models.payment_processors.mixins import TriggeredProcessorMixin
 
 from ..views import PayUTransactionView
-from ..forms import PayUTransactionForm, PayUBillingForm
+from ..forms import (PayUTransactionFormTriggered,
+                     PayUTransactionFormRecurring, PayUBillingForm)
 
 from .payment_methods import PayUPaymentMethod
 
 
-class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
-    reference = 'payu_triggered'
-    form_class = PayUTransactionForm
+class PayUBase(PaymentProcessorBase, TriggeredProcessorMixin):
     payment_method_class = PayUPaymentMethod
     transaction_view_class = PayUTransactionView
 
@@ -52,12 +51,16 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
                 archived_customer = form.to_payu_billing()
                 archived_customer['BILL_ADDRESS'] = address
 
+                tax_number = transaction.payment_method.archived_customer.sales_tax_number
+                if tax_number:
+                    archived_customer['BILL_FISCALCODE'] = tax_number
+
                 transaction.payment_method.archived_customer = archived_customer
                 transaction.payment_method.save()
 
-            form = PayUTransactionForm(payment_method=transaction.payment_method,
-                                       transaction=transaction, request=request,
-                                       billing_details=form.to_payu_billing())
+            form = self.form_class(payment_method=transaction.payment_method,
+                                   transaction=transaction, request=request,
+                                   billing_details=form.to_payu_billing())
 
         return form
 
@@ -99,6 +102,23 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
         :param transaction: A PayU transaction in Initial or Pending state.
         :return: True on success, False on failure.
         """
+        pass
+
+
+class PayUTriggered(PayUBase):
+    reference = 'payu_triggered'
+    form_class = PayUTransactionFormTriggered
+
+
+class PayURecurring(PayUBase):
+    reference = 'payu_recurring'
+    form_class = PayUTransactionFormRecurring
+
+    def execute_transaction(self, transaction):
+        """
+        :param transaction: A PayU transaction in Initial or Pending state.
+        :return: True on success, False on failure.
+        """
 
         if not transaction.payment_processor == self:
             return False
@@ -124,8 +144,6 @@ class PayUTriggered(PaymentProcessorBase, TriggeredProcessorMixin):
             "DELIVERY_PHONE": billing_details["BILL_PHONE"]
         }
 
-        # TODO: check why USD is not a valid currency
-        # TODO: try to create a RON payment
         payment_details = {
             "AMOUNT": str(transaction.amount),
             "CURRENCY": str(transaction.currency),

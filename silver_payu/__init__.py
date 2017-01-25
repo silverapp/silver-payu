@@ -1,1 +1,1 @@
-from .models import PayUPaymentMethod, PayUTriggered
+from .models import PayUPaymentMethod, PayUTriggered, PayURecurring
