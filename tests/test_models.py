@@ -10,6 +10,10 @@ from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
                                 payu_ipn_received, payu_token_received)
 from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 
+from .fixtures import (customer, transaction, transaction_recurring,
+                       payment_method, proforma, invoice,
+                       payment_processor, payment_processor_recurring)
+
 faker = Faker()
 
 
@@ -49,18 +53,13 @@ def test_payment_method_data_set():
         'BILL_CITY': 'Timisoara',
         'BILL_COUNTRYCODE': 'RO',
         'BILL_EMAIL': 'john@acme.com',
-        'BILL_FISCALCODE': '',
         'BILL_FNAME': 'John',
         'BILL_LNAME': 'Doe',
         'BILL_PHONE': '+40000000000'
     })
 ])
-def test_payment_processor_get_form(data, form_class, archived_customer):
-    transaction = G(Transaction, payment_method=G(PayUPaymentMethod),
-                    invoice=G(Invoice,
-                              customer=G(Customer, address_1='9', address_2='9')))
-
-    payment_processor = PaymentProcessorManager.get_instance('payu_triggered')
+def test_payment_processor_get_form(payment_processor, transaction, data,
+                                    form_class, archived_customer):
     form = payment_processor.get_form(transaction, MagicMock(POST=data))
 
     assert isinstance(form, form_class)
@@ -74,12 +73,13 @@ def test_payment_processor_get_form(data, form_class, archived_customer):
     (Transaction.States.Pending, "settle", Transaction.States.Settled),
     (Transaction.States.Settled, "pending", Transaction.States.Settled)
 ])
-def test_update_transaction(initial_state, status, asserted_state):
-    document = G(Invoice, state=Invoice.STATES.ISSUED)
-    document.pay = lambda : ''
-    transaction = G(Transaction, state=initial_state, invoice=document)
+def test_update_transaction(invoice, payment_processor, payment_method, proforma,
+                            initial_state, status, asserted_state):
+    invoice.pay = lambda : ''
+    transaction = G(Transaction, state=initial_state, invoice=invoice,
+                    currency=invoice.transaction_currency, amount=invoice.total,
+                    payment_method=payment_method, proforma=proforma)
 
-    payment_processor = PaymentProcessorManager.get_instance('payu_triggered')
     payment_processor.update_transaction_status(transaction, status)
     transaction.refresh_from_db()
 
@@ -87,37 +87,35 @@ def test_update_transaction(initial_state, status, asserted_state):
 
 
 @pytest.mark.django_db
-def test_execute_transaction_wrong_payment_processor():
-    assert not PayUTriggered().execute_transaction(G(Transaction))
+def test_execute_transaction_wrong_payment_processor(payment_processor_recurring, transaction_recurring):
+    assert not payment_processor_recurring.execute_transaction(transaction_recurring)
 
 
 @pytest.mark.django_db
-def test_execute_transaction_wrong_transaction_state():
-    payment_processor = PayUTriggered()
-    payment_processor._charge_transaction = lambda x: True
+def test_execute_transaction_wrong_transaction_state(payment_processor_recurring):
+    payment_processor_recurring._charge_transaction = lambda x: True
 
-    transaction = MagicMock(payment_processor=payment_processor,
-                            state=Transaction.States.Settled)
-    assert not payment_processor.execute_transaction(transaction)
+    transaction_recurring = MagicMock(payment_processor=payment_processor_recurring,
+                                      state=Transaction.States.Settled)
+    assert not payment_processor_recurring.execute_transaction(transaction_recurring)
 
 
 @pytest.mark.django_db
-def test_execute_transaction_happy_path():
-    payment_processor = PayUTriggered()
-    payment_processor._charge_transaction = lambda x: True
+def test_execute_transaction_happy_path(payment_processor_recurring):
+    payment_processor_recurring._charge_transaction = lambda x: True
 
-    transaction = MagicMock(payment_processor=payment_processor,
-                            state=Transaction.States.Initial)
-    assert payment_processor.execute_transaction(transaction)
+    transaction_recurring = MagicMock(payment_processor=payment_processor_recurring,
+                                      state=Transaction.States.Initial)
+    assert payment_processor_recurring.execute_transaction(transaction_recurring)
 
 
 @pytest.mark.django_db
 @patch('silver_payu.models.payment_processors.TokenPayment')
-def test_charge_transaction(mocked_token_payment):
+def test_charge_transaction_recurring(mocked_token_payment,
+                                      payment_processor_recurring,
+                                      payment_method, transaction_recurring):
     mocked_token_payment.return_value.pay.return_value = '{"code": "0"}'
-    payment_processor = PayUTriggered()
 
-    payment_method = G(PayUPaymentMethod)
     payment_method.token = faker.word
     payment_method.archived_customer = {
         "BILL_ADDRESS": faker.address(),
@@ -128,8 +126,7 @@ def test_charge_transaction(mocked_token_payment):
         "BILL_PHONE": faker.phone_number(),
     }
 
-    transaction = G(Transaction, payment_method=payment_method)
-    assert payment_processor._charge_transaction(transaction)
+    assert payment_processor_recurring._charge_transaction(transaction_recurring)
 
     asserted_payment_details = payment_method.archived_customer
     asserted_payment_details.update({
@@ -139,9 +136,9 @@ def test_charge_transaction(mocked_token_payment):
         "DELIVERY_FNAME": asserted_payment_details["BILL_FNAME"],
         "DELIVERY_LNAME": asserted_payment_details["BILL_LNAME"],
         "DELIVERY_PHONE": asserted_payment_details["BILL_PHONE"],
-        "AMOUNT": str(transaction.amount),
-        "CURRENCY": str(transaction.currency),
-        "EXTERNAL_REF": str(transaction.uuid),
+        "AMOUNT": str(transaction_recurring.amount),
+        "CURRENCY": str(transaction_recurring.currency),
+        "EXTERNAL_REF": str(transaction_recurring.uuid),
     })
 
     mocked_token_payment.assert_called_once_with(asserted_payment_details,
@@ -154,18 +151,15 @@ def test_charge_transaction(mocked_token_payment):
     ('{"code": "1"}', False),
     ('{code: "1"}', False),
 ])
-def test_parse_token_payment_result(payment_result, excepted_return):
-    assert PayUTriggered()._parse_result(G(Transaction), payment_result) == excepted_return
+def test_parse_token_payment_result(payment_processor_recurring,
+                                    transaction_recurring, payment_result,
+                                    excepted_return):
+    assert payment_processor_recurring._parse_result(transaction_recurring, payment_result) == excepted_return
 
 
 @pytest.mark.django_db
 @patch('silver.models.transactions._sync_transaction_state_with_document')
-def test_ipn_received(mocked_sync):
-    document = G(Invoice, state=Invoice.STATES.ISSUED)
-    transaction = G(Transaction, uuid=faker.uuid4(), invoice=document,
-                    payment_method=G(PayUPaymentMethod,
-                                     payment_processor=PayUTriggered))
-
+def test_ipn_received(mocked_sync, transaction):
     payu_ipn_received(MagicMock(REFNOEXT=transaction.uuid))
 
     transaction.refresh_from_db()
@@ -174,16 +168,12 @@ def test_ipn_received(mocked_sync):
 
 
 @pytest.mark.django_db
-def test_token_received():
-    transaction = G(Transaction, uuid=faker.uuid4(),
-                    payment_method=G(PayUPaymentMethod,
-                                     payment_processor=PayUTriggered))
-
-    sender = MagicMock(ipn=MagicMock(REFNOEXT=transaction.uuid),
+def test_token_received(transaction_recurring):
+    sender = MagicMock(ipn=MagicMock(REFNOEXT=transaction_recurring.uuid),
                        IPN_CC_TOKEN=faker.word())
     payu_token_received(sender)
 
-    transaction.payment_method.refresh_from_db()
+    transaction_recurring.payment_method.refresh_from_db()
 
-    assert transaction.payment_method.token == sender.IPN_CC_TOKEN
-    assert transaction.payment_method.verified
+    assert transaction_recurring.payment_method.token == sender.IPN_CC_TOKEN
+    assert transaction_recurring.payment_method.verified

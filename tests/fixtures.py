@@ -8,12 +8,19 @@ from silver_payu.models import PayUPaymentMethod
 
 @pytest.fixture
 def customer():
-    return G(Customer, currency='RON')
+    return G(Customer, currency='RON', address_1='9', address_2='9',
+             sales_tax_number=0)
 
 
 @pytest.fixture
 def payment_processor():
     return PaymentProcessorManager.get_instance('payu_triggered')
+
+
+@pytest.fixture
+def payment_processor_recurring():
+    return PaymentProcessorManager.get_instance('payu_recurring')
+
 
 
 @pytest.fixture
@@ -34,5 +41,12 @@ def invoice(customer, proforma):
 
 @pytest.fixture
 def transaction(customer, payment_processor, payment_method, proforma, invoice):
+    return G(Transaction, invoice=invoice, proforma=proforma, currency='RON',
+             amount=invoice.total, payment_method=payment_method)
+
+
+@pytest.fixture
+def transaction_recurring(customer, payment_processor_recurring,
+                          payment_method, proforma, invoice):
     return G(Transaction, invoice=invoice, proforma=proforma, currency='RON',
              amount=invoice.total, payment_method=payment_method)

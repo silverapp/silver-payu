@@ -102,7 +102,4 @@ class PayUBillingForm(GenericTransactionForm):
             'city': customer.city
         }
 
-        if customer.sales_tax_number:
-            form_body['fiscal_code'] = customer.sales_tax_number
-
         return form_body
