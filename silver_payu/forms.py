@@ -91,11 +91,9 @@ class PayUBillingForm(GenericTransactionForm):
         }
 
     def _build_form_body(self, customer):
-        billing_name = customer.billing_name.split()
-
         form_body = {
-            'first_name': billing_name[0],
-            'last_name': billing_name[1] if len(billing_name) > 1 else '',
+            'first_name': customer.first_name,
+            'last_name': customer.last_name,
             'email': customer.email,
             'phone': customer.phone or '',
             'country': customer.country,

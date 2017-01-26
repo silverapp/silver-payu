@@ -1,0 +1,17 @@
+{% extends 'forms/transaction_form.html' %}
+
+{% block payment_processor %}
+{% endblock %}
+
+{% block form %}
+    {% if not form.errors %}
+        {% include 'payu/payu_lu_form.html' %}
+    {% else %}
+        {% include 'payu/get_billing_details_form.html' %}
+    {% endif %}
+{% endblock %}
+
+{% block transaction %}
+    {{ block.super }}
+    {{ payment_method.data.details }}
+{% endblock %}
