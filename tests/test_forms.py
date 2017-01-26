@@ -9,23 +9,15 @@ from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
                                 payu_ipn_received, payu_token_received)
 from silver_payu.forms import PayUTransactionFormBase
 
+from .fixtures import (customer, transaction, payment_method,
+                       payment_processor, proforma, invoice)
+
 
 @pytest.mark.django_db
 @patch('silver_payu.forms.datetime')
-def test_payu_transaction_form_build_body(mocked_datetime):
+def test_payu_transaction_form_build_body(mocked_datetime, transaction,
+                                          payment_method):
     mocked_datetime.now.return_value.strftime.return_value = 'order_date'
-
-    customer = G(Customer, currency='RON')
-    payment_processor = PaymentProcessorManager.get_instance('payu_triggered')
-    payment_method = G(PayUPaymentMethod, customer=customer,
-                       payment_processor=payment_processor)
-    proforma = G(Proforma, state=Invoice.STATES.ISSUED, customer=customer,
-                 transaction_currency='RON')
-    invoice = G(Invoice, proforma=proforma, state=Invoice.STATES.ISSUED,
-                customer=customer, transaction_currency='RON')
-    transaction = G(Transaction, invoice=invoice, proforma=proforma,
-                    amount=invoice.total,
-                    payment_method=payment_method, currency='RON')
 
     with patch('silver.utils.payments._get_jwt_token') as mocked_token:
         mocked_token.return_value = 'token'
