@@ -14,7 +14,7 @@
 
 from django.http import HttpResponse
 
-from silver.views import GenericTransactionView
+from silver.payment_processors.views import GenericTransactionView
 
 
 class PayUTransactionView(GenericTransactionView):

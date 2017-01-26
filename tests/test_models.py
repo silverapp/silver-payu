@@ -3,10 +3,8 @@ from faker import Faker
 from mock import MagicMock, patch
 from django_dynamic_fixture import G
 
-from silver.models import (Transaction, Proforma, Invoice, Customer,
-                           PaymentProcessorManager)
-
-from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
+from silver.models import Transaction, PaymentMethod
+from silver_payu.models import (PayUPaymentMethod,
                                 payu_ipn_received, payu_token_received)
 from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 
@@ -116,7 +114,7 @@ def test_charge_transaction_triggered(mocked_token_payment,
                                       payment_method, transaction_triggered):
     mocked_token_payment.return_value.pay.return_value = '{"code": "0"}'
 
-    payment_method.token = faker.word
+    payment_method.token = faker.word()
     payment_method.archived_customer = {
         "BILL_ADDRESS": faker.address(),
         "BILL_CITY": faker.city(),
