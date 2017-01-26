@@ -1,8 +1,8 @@
 import pytest
 from django_dynamic_fixture import G
 
-from silver.models import (Transaction, Proforma, Invoice, Customer,
-                           PaymentProcessorManager)
+from silver.models import Transaction, Proforma, Invoice, Customer
+from silver import payment_processors
 from silver_payu.models import PayUPaymentMethod
 
 
@@ -14,18 +14,18 @@ def customer():
 
 @pytest.fixture
 def payment_processor():
-    return PaymentProcessorManager.get_instance('payu_manual')
+    return payment_processors.get_instance('payu_manual')
 
 
 @pytest.fixture
 def payment_processor_triggered():
-    return PaymentProcessorManager.get_instance('payu_triggered')
+    return payment_processors.get_instance('payu_triggered')
 
 
 @pytest.fixture
 def payment_method(customer, payment_processor):
     return G(PayUPaymentMethod, customer=customer,
-             payment_processor=payment_processor)
+             payment_processor=payment_processor.name)
 
 
 @pytest.fixture
@@ -33,10 +33,12 @@ def proforma(customer):
     return G(Proforma, state=Invoice.STATES.ISSUED, customer=customer,
              transaction_currency='RON')
 
+
 @pytest.fixture
 def invoice(customer, proforma):
     return G(Invoice, proforma=proforma, state=Invoice.STATES.ISSUED,
              customer=customer, transaction_currency='RON')
+
 
 @pytest.fixture
 def transaction(customer, payment_processor, payment_method, proforma, invoice):

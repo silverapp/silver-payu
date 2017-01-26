@@ -21,10 +21,10 @@ from django.dispatch import receiver
 from payu.payments import TokenPayment
 from payu.signals import payment_authorized, alu_token_created
 
-from silver.models import Transaction
-from silver.models.payment_processors.base import PaymentProcessorBase
-from silver.models.payment_processors.mixins import (TriggeredProcessorMixin,
-                                                     ManualProcessorMixin)
+from silver.models import Transaction, PaymentMethod
+from silver.payment_processors import PaymentProcessorBase
+from silver.payment_processors.mixins import (TriggeredProcessorMixin,
+                                              ManualProcessorMixin)
 
 from ..views import PayUTransactionView
 from ..forms import (PayUTransactionFormManual,
@@ -75,13 +75,11 @@ class PayUBase(PaymentProcessorBase):
     def handle_transaction_response(self, transaction, request):
         if request.GET.get('ctrl', None):
             transaction.data['ctrl'] = request.GET['ctrl']
-            transaction.payment_processor.update_transaction_status(transaction,
-                                                                    "pending")
+            self.update_transaction_status(transaction, "pending")
         else:
             error = request.GET.get('err', None) or 'Unknown error'
             transaction.data['error'] = error
-            transaction.payment_processor.update_transaction_status(transaction,
-                                                                    "failed")
+            self.update_transaction_status(transaction, "failed")
         transaction.save()
 
     def update_transaction_status(self, transaction, status):
@@ -101,12 +99,12 @@ class PayUBase(PaymentProcessorBase):
 
 
 class PayUManual(PayUBase, ManualProcessorMixin):
-    reference = 'payu_manual'
+    template_slug = 'payu_manual'
     form_class = PayUTransactionFormManual
 
 
 class PayUTriggered(PayUBase, TriggeredProcessorMixin):
-    reference = 'payu_triggered'
+    template_slug = 'payu_triggered'
     form_class = PayUTransactionFormTriggered
 
     def execute_transaction(self, transaction):
@@ -114,9 +112,6 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         :param transaction: A PayU transaction in Initial or Pending state.
         :return: True on success, False on failure.
         """
-
-        if not transaction.payment_processor == self:
-            return False
 
         if transaction.state not in [Transaction.States.Initial,
                                      Transaction.States.Pending]:
@@ -175,14 +170,15 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 @receiver(payment_authorized)
 def payu_ipn_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.REFNOEXT)
-    transaction.payment_processor.update_transaction_status(transaction,
-                                                            "settle")
+    payment_processor = transaction.payment_method.get_payment_processor()
+    payment_processor.update_transaction_status(transaction, "settle")
 
 
 @receiver(alu_token_created)
 def payu_token_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.ipn.REFNOEXT)
+    payment_method = PayUPaymentMethod.objects.get(pk=transaction.payment_method_id)
 
-    transaction.payment_method.token = sender.IPN_CC_TOKEN
-    transaction.payment_method.verified = True
-    transaction.payment_method.save()
+    payment_method.token = sender.IPN_CC_TOKEN
+    payment_method.verified = True
+    payment_method.save()

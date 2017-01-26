@@ -5,9 +5,8 @@ import pytz
 from payu.forms import PayULiveUpdateForm
 
 from django import forms
-from rest_framework.reverse import reverse
 
-from silver.forms import GenericTransactionForm
+from silver.payment_processors.forms import GenericTransactionForm
 from silver.utils.payments import get_payment_complete_url
 from silver.utils.international import countries
 

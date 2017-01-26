@@ -1,9 +1,5 @@
 import pytest
-from mock import MagicMock, patch
-from django_dynamic_fixture import G
-
-from silver.models import (Transaction, Proforma, Invoice, Customer,
-                           PaymentProcessorManager)
+from mock import patch
 
 from silver_payu.forms import PayUTransactionFormBase
 
