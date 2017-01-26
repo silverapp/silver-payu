@@ -5,8 +5,6 @@ from django_dynamic_fixture import G
 from silver.models import (Transaction, Proforma, Invoice, Customer,
                            PaymentProcessorManager)
 
-from silver_payu.models import (PayUPaymentMethod, PayUTriggered,
-                                payu_ipn_received, payu_token_received)
 from silver_payu.forms import PayUTransactionFormBase
 
 from .fixtures import (customer, transaction, payment_method,

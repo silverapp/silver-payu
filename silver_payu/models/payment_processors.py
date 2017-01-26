@@ -23,16 +23,17 @@ from payu.signals import payment_authorized, alu_token_created
 
 from silver.models import Transaction
 from silver.models.payment_processors.base import PaymentProcessorBase
-from silver.models.payment_processors.mixins import TriggeredProcessorMixin
+from silver.models.payment_processors.mixins import (TriggeredProcessorMixin,
+                                                     ManualProcessorMixin)
 
 from ..views import PayUTransactionView
-from ..forms import (PayUTransactionFormTriggered,
-                     PayUTransactionFormRecurring, PayUBillingForm)
+from ..forms import (PayUTransactionFormManual,
+                     PayUTransactionFormTriggered, PayUBillingForm)
 
 from .payment_methods import PayUPaymentMethod
 
 
-class PayUBase(PaymentProcessorBase, TriggeredProcessorMixin):
+class PayUBase(PaymentProcessorBase):
     payment_method_class = PayUPaymentMethod
     transaction_view_class = PayUTransactionView
     allowed_currencies = ('RON', )
@@ -98,22 +99,15 @@ class PayUBase(PaymentProcessorBase, TriggeredProcessorMixin):
         transaction.save()
         return True
 
-    def execute_transaction(self, transaction):
-        """
-        :param transaction: A PayU transaction in Initial or Pending state.
-        :return: True on success, False on failure.
-        """
-        pass
+
+class PayUManual(PayUBase, ManualProcessorMixin):
+    reference = 'payu_manual'
+    form_class = PayUTransactionFormManual
 
 
-class PayUTriggered(PayUBase):
+class PayUTriggered(PayUBase, TriggeredProcessorMixin):
     reference = 'payu_triggered'
     form_class = PayUTransactionFormTriggered
-
-
-class PayURecurring(PayUBase):
-    reference = 'payu_recurring'
-    form_class = PayUTransactionFormRecurring
 
     def execute_transaction(self, transaction):
         """

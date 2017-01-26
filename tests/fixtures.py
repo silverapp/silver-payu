@@ -14,13 +14,12 @@ def customer():
 
 @pytest.fixture
 def payment_processor():
-    return PaymentProcessorManager.get_instance('payu_triggered')
+    return PaymentProcessorManager.get_instance('payu_manual')
 
 
 @pytest.fixture
-def payment_processor_recurring():
-    return PaymentProcessorManager.get_instance('payu_recurring')
-
+def payment_processor_triggered():
+    return PaymentProcessorManager.get_instance('payu_triggered')
 
 
 @pytest.fixture
@@ -46,7 +45,7 @@ def transaction(customer, payment_processor, payment_method, proforma, invoice):
 
 
 @pytest.fixture
-def transaction_recurring(customer, payment_processor_recurring,
+def transaction_triggered(customer, payment_processor_triggered,
                           payment_method, proforma, invoice):
     return G(Transaction, invoice=invoice, proforma=proforma, currency='RON',
              amount=invoice.total, payment_method=payment_method)

@@ -34,8 +34,8 @@ settings.configure(
             'display_name': 'PayU - Triggered',
             'setup_data': {}
         },
-        'silver_payu.PayURecurring': {
-            'display_name': 'PayU - Recurring',
+        'silver_payu.PayUManual': {
+            'display_name': 'PayU - Manual',
             'setup_data': {}
         }
     },

@@ -13,7 +13,7 @@ from silver.utils.international import countries
 
 
 class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
-    recurring = None
+    triggered = None
 
     def __init__(self, payment_method, transaction, billing_details,
                  request=None, *args, **kwargs):
@@ -36,7 +36,7 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
             'BACK_REF': get_payment_complete_url(transaction, request),
             'ORDER': self._get_order(transaction)
         }
-        if self.recurring:
+        if self.triggered:
             form_body['LU_ENABLE_TOKEN'] = '1'
 
         return form_body
@@ -55,12 +55,12 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
         }]
 
 
+class PayUTransactionFormManual(PayUTransactionFormBase):
+    triggered = False
+
+
 class PayUTransactionFormTriggered(PayUTransactionFormBase):
-    recurring = False
-
-
-class PayUTransactionFormRecurring(PayUTransactionFormBase):
-    recurring = True
+    triggered = True
 
 
 class PayUBillingForm(GenericTransactionForm):
