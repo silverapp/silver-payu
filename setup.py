@@ -20,7 +20,7 @@ import os
 import versioneer
 from setuptools import setup, find_packages
 
-from silver_pay import __version__ as version
+from silver_payu import __version__ as version
 
 install_requires = ['django-payu-ro']
 
