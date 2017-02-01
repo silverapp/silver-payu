@@ -25,6 +25,7 @@ from silver.payment_processors import PaymentProcessorBase
 from silver.payment_processors.mixins import (TriggeredProcessorMixin,
                                               ManualProcessorMixin)
 
+from silver_payu.errors import ERROR_CODES
 from silver_payu.views import PayUTransactionView
 from silver_payu.forms import (PayUTransactionFormManual,
                                PayUTransactionFormTriggered, PayUBillingForm)
@@ -71,29 +72,17 @@ class PayUBase(PaymentProcessorBase):
         pass
 
     def handle_transaction_response(self, transaction, request):
-        if request.GET.get('ctrl', None):
-            transaction.data['ctrl'] = request.GET['ctrl']
-            self.update_transaction_status(transaction, "pending")
-        else:
-            error = request.GET.get('err', None) or 'Unknown error'
-            transaction.data['error'] = error
-            self.update_transaction_status(transaction, "failed")
-        transaction.save()
-
-    def update_transaction_status(self, transaction, status):
         try:
-            if status == "pending":
+            if request.GET.get('ctrl', None):
+                transaction.data['ctrl'] = request.GET['ctrl']
                 transaction.process()
-            elif status == "failed":
-                transaction.process()
-                transaction.fail()
-            elif status == "settle":
-                transaction.settle()
-        except TransitionNotAllowed as e:
-            return False
+            else:
+                error = request.GET.get('err', None) or 'Unknown error'
+                transaction.fail(fail_reason=error)
+        except TransitionNotAllowed:
+            pass
 
         transaction.save()
-        return True
 
 
 class PayUManual(PayUBase, ManualProcessorMixin):
@@ -121,16 +110,19 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         token = transaction.payment_method.token
 
         billing_details = transaction.payment_method.archived_customer
-        # TODO: check if customer is valid
-
-        delivery_details = {
-            "DELIVERY_ADDRESS": billing_details["BILL_ADDRESS"],
-            "DELIVERY_CITY": billing_details["BILL_CITY"],
-            "DELIVERY_EMAIL": billing_details["BILL_EMAIL"],
-            "DELIVERY_FNAME": billing_details["BILL_FNAME"],
-            "DELIVERY_LNAME": billing_details["BILL_LNAME"],
-            "DELIVERY_PHONE": billing_details["BILL_PHONE"]
-        }
+        try:
+            delivery_details = {
+                "DELIVERY_ADDRESS": billing_details["BILL_ADDRESS"],
+                "DELIVERY_CITY": billing_details["BILL_CITY"],
+                "DELIVERY_EMAIL": billing_details["BILL_EMAIL"],
+                "DELIVERY_FNAME": billing_details["BILL_FNAME"],
+                "DELIVERY_LNAME": billing_details["BILL_LNAME"],
+                "DELIVERY_PHONE": billing_details["BILL_PHONE"]
+            }
+        except KeyError as error:
+            transaction.fail(fail_reason='Invalid customer details. [{}]'.format(error))
+            transaction.save()
+            return False
 
         payment_details = {
             "AMOUNT": str(transaction.amount),
@@ -142,28 +134,40 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 
         payment = TokenPayment(payment_details, token)
 
-        # TODO: handle connection failing
-        result = payment.pay()
+        try:
+            result = payment.pay()
+        except Exception as error:
+            return False
 
         return self._parse_result(transaction, result)
 
     def _parse_result(self, transaction, result):
         try:
-            # TODO: return json from django-payu-ro
-            if not int(json.loads(result)["code"]):
-                self.update_transaction_status(transaction, "pending")
+            result = json.loads(result)
+
+            if not result["code"]:
+                transaction.process()
+                transaction.save()
                 return True
             else:
-                self.update_transaction_status(transaction, "failed")
-                transaction.data["result"] = result
-        except Exception as e:
-            self.update_transaction_status(transaction, "failed")
-            transaction.data["result"] = str(e)
+                error_code, error_reason = self._parse_response_error(result)
+                transaction.fail(fail_code=error_code, fail_reason=error_reason)
+        except ValueError as error:
+            transaction.fail(fail_reason=str(error))
 
         transaction.save()
 
         return False
 
+    def _parse_response_error(self, payu_response):
+        if not isinstance(payu_response, dict) or 'code' not in payu_response:
+            return 'default', 'Missing payu error code.({})'.format(payu_response)
+
+        if payu_response['code'] in ERROR_CODES:
+            error = ERROR_CODES[payu_response['code']]
+            return error['silver_code'], error['reason']
+
+        return 'default', 'Unknown error code {}'.format(payu_response['code'])
 
 @receiver(payment_authorized)
 def payu_ipn_received(sender, **kwargs):
