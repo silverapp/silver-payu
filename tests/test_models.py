@@ -4,9 +4,9 @@ from mock import MagicMock, patch
 from django_dynamic_fixture import G
 
 from silver.models import Transaction, PaymentMethod
-from silver_payu.models import (PayUPaymentMethod,
-                                payu_ipn_received, payu_token_received)
 from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
+from silver_payu.models import PayUPaymentMethod
+from silver_payu.payment_processors import payu_ipn_received, payu_token_received
 
 from .fixtures import (customer, transaction, transaction_triggered,
                        payment_method, proforma, invoice,
@@ -108,7 +108,7 @@ def test_execute_transaction_happy_path(payment_processor_triggered):
 
 
 @pytest.mark.django_db
-@patch('silver_payu.models.payment_processors.TokenPayment')
+@patch('silver_payu.payment_processors.TokenPayment')
 def test_charge_transaction_triggered(mocked_token_payment,
                                       payment_processor_triggered,
                                       payment_method, transaction_triggered):

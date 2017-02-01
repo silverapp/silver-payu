@@ -31,11 +31,11 @@ settings.configure(
     PAYMENT_METHOD_SECRET=b'MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=',
     PAYMENT_PROCESSORS={
         'payu_triggered': {
-            'class': 'silver_payu.PayUTriggered',
+            'class': 'silver_payu.payment_processors.PayUTriggered',
             'setup_data': {}
         },
         'payu_manual': {
-            'class': 'silver_payu.PayUManual',
+            'class': 'silver_payu.payment_processors.PayUManual',
             'setup_data': {}
         }
     },

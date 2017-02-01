@@ -15,22 +15,20 @@ import json
 
 from django_fsm import TransitionNotAllowed
 
-from django.utils import timezone
 from django.dispatch import receiver
 
 from payu.payments import TokenPayment
 from payu.signals import payment_authorized, alu_token_created
 
-from silver.models import Transaction, PaymentMethod
+from silver.models import Transaction
 from silver.payment_processors import PaymentProcessorBase
 from silver.payment_processors.mixins import (TriggeredProcessorMixin,
                                               ManualProcessorMixin)
 
-from ..views import PayUTransactionView
-from ..forms import (PayUTransactionFormManual,
-                     PayUTransactionFormTriggered, PayUBillingForm)
-
-from .payment_methods import PayUPaymentMethod
+from silver_payu.views import PayUTransactionView
+from silver_payu.forms import (PayUTransactionFormManual,
+                               PayUTransactionFormTriggered, PayUBillingForm)
+from silver_payu.models import PayUPaymentMethod
 
 
 class PayUBase(PaymentProcessorBase):

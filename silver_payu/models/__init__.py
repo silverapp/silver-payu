@@ -13,5 +13,3 @@
 # limitations under the License.
 
 from .payment_methods import PayUPaymentMethod
-from .payment_processors import (PayUTriggered, PayUManual,
-                                 payu_ipn_received, payu_token_received)
