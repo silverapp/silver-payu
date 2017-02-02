@@ -145,7 +145,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         try:
             result = json.loads(result)
 
-            if not result["code"]:
+            if "code" in result and not int(result["code"]):
                 transaction.process()
                 transaction.save()
                 return True
@@ -176,9 +176,13 @@ def payu_ipn_received(sender, **kwargs):
     try:
         transaction.settle()
         transaction.save()
-    except Exception as error:
-        transaction.fail(fail_reason=str(error))
-        transaction.save()
+    except TransitionNotAllowed as error:
+        try:
+            transaction.fail(fail_reason=str(error))
+            transaction.save()
+        except TransitionNotAllowed:
+            transaction.fail_reason = str(error)
+            transaction.save()
 
 
 @receiver(alu_token_created)
