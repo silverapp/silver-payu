@@ -163,8 +163,8 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         if not isinstance(payu_response, dict) or 'code' not in payu_response:
             return 'default', 'Missing payu error code.({})'.format(payu_response)
 
-        if payu_response['code'] in ERROR_CODES:
-            error = ERROR_CODES[payu_response['code']]
+        if str(payu_response['code']) in ERROR_CODES:
+            error = ERROR_CODES[str(payu_response['code'])]
             return error['silver_code'], error['reason']
 
         return 'default', 'Unknown error code {}'.format(payu_response['code'])
