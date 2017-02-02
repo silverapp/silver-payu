@@ -172,8 +172,13 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 @receiver(payment_authorized)
 def payu_ipn_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.REFNOEXT)
-    payment_processor = transaction.payment_method.get_payment_processor()
-    payment_processor.update_transaction_status(transaction, "settle")
+
+    try:
+        transaction.settle()
+        transaction.save()
+    except Exception as error:
+        transaction.fail(fail_reason=str(error))
+        transaction.save()
 
 
 @receiver(alu_token_created)
