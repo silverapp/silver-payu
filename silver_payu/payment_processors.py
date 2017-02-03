@@ -35,7 +35,7 @@ from silver_payu.models import PayUPaymentMethod
 class PayUBase(PaymentProcessorBase):
     payment_method_class = PayUPaymentMethod
     transaction_view_class = PayUTransactionView
-    allowed_currencies = ('RON', )
+    allowed_currencies = ('RON', 'USD', 'EUR')
 
     _has_been_setup = False
 
