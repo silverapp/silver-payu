@@ -1,2 +1,2 @@
-git+https://git@github.com/silverapp/silver.git@1b693fb93f7c860dce3af82dc63772e816f36775#egg=silver
+django-silver==0.2.0
 django-payu-ro==1.0.0-rc2
