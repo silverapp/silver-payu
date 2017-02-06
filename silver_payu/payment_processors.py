@@ -16,6 +16,7 @@ import json
 from django_fsm import TransitionNotAllowed
 
 from django.dispatch import receiver
+from django.utils.dateparse import parse_datetime
 
 from payu.payments import TokenPayment
 from payu.signals import payment_authorized, alu_token_created
@@ -192,4 +193,6 @@ def payu_token_received(sender, **kwargs):
 
     payment_method.token = sender.IPN_CC_TOKEN
     payment_method.verified = True
+    payment_method.display_info = sender.IPN_CC_MASK
+    payment_method.valid_until = sender.IPN_CC_EXP_DATE
     payment_method.save()

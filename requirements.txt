@@ -1,2 +1,2 @@
-django-silver==0.2.0
+django-silver==0.2.4
 django-payu-ro==1.0.0-rc2

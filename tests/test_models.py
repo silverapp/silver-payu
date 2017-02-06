@@ -3,6 +3,8 @@ from faker import Faker
 from mock import MagicMock, patch
 from django_dynamic_fixture import G
 
+from django.utils.dateparse import parse_datetime
+
 from silver.models import Transaction, PaymentMethod
 from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 from silver_payu.models import PayUPaymentMethod
@@ -62,26 +64,6 @@ def test_payment_processor_get_form(payment_processor, transaction, data,
 
     assert isinstance(form, form_class)
     assert transaction.payment_method.archived_customer == archived_customer
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('initial_state, status, asserted_state', [
-    (Transaction.States.Initial, "pending", Transaction.States.Pending),
-    (Transaction.States.Initial, "failed", Transaction.States.Failed),
-    (Transaction.States.Pending, "settle", Transaction.States.Settled),
-    (Transaction.States.Settled, "pending", Transaction.States.Settled)
-])
-def test_update_transaction(invoice, payment_processor, payment_method, proforma,
-                            initial_state, status, asserted_state):
-    invoice.pay = lambda : ''
-    transaction = G(Transaction, state=initial_state, invoice=invoice,
-                    currency=invoice.transaction_currency, amount=invoice.total,
-                    payment_method=payment_method, proforma=proforma)
-
-    payment_processor.update_transaction_status(transaction, status)
-    transaction.refresh_from_db()
-
-    assert transaction.state == asserted_state
 
 
 @pytest.mark.django_db
@@ -156,8 +138,8 @@ def test_parse_token_payment_result(payment_processor_triggered,
 
 
 @pytest.mark.django_db
-@patch('silver.models.transactions._sync_transaction_state_with_document')
-def test_ipn_received(mocked_sync, transaction):
+@patch('silver.models.transactions.transaction.Transaction.update_document_state')
+def test_ipn_received(mocked_document, transaction):
     payu_ipn_received(MagicMock(REFNOEXT=transaction.uuid))
 
     transaction.refresh_from_db()
@@ -168,10 +150,13 @@ def test_ipn_received(mocked_sync, transaction):
 @pytest.mark.django_db
 def test_token_received(transaction_triggered):
     sender = MagicMock(ipn=MagicMock(REFNOEXT=transaction_triggered.uuid),
-                       IPN_CC_TOKEN=faker.word())
+                       IPN_CC_TOKEN=faker.word(), IPN_CC_EXP_DATE='2017-07-31',
+                       IPN_CC_MASK=faker.word())
     payu_token_received(sender)
 
     transaction_triggered.payment_method.refresh_from_db()
 
     assert transaction_triggered.payment_method.token == sender.IPN_CC_TOKEN
+    assert transaction_triggered.payment_method.valid_until == parse_datetime(sender.IPN_CC_EXP_DATE + " 00:00:00")
+    assert transaction_triggered.payment_method.display_info == sender.IPN_CC_MASK
     assert transaction_triggered.payment_method.verified
