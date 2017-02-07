@@ -50,7 +50,7 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
             'PCODE': '{}-{}'.format(document.series, document.number),
             'PRICE': str(transaction.amount),
             'PRICE_TYPE': 'GROSS',
-            'VAT': str(document.sales_tax_percent) or '0'
+            'VAT': str(document.sales_tax_percent or '0')
         }]
 
 
