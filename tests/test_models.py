@@ -67,7 +67,8 @@ def test_payment_processor_get_form(payment_processor, transaction, data,
 
 
 @pytest.mark.django_db
-def test_execute_transaction_wrong_payment_processor(payment_processor_triggered, transaction_triggered):
+def test_execute_transaction_wrong_payment_processor(payment_processor_triggered,
+                                                     transaction_triggered):
     assert not payment_processor_triggered.execute_transaction(transaction_triggered)
 
 
@@ -134,7 +135,8 @@ def test_charge_transaction_triggered(mocked_token_payment,
 def test_parse_token_payment_result(payment_processor_triggered,
                                     transaction_triggered, payment_result,
                                     excepted_return):
-    assert payment_processor_triggered._parse_result(transaction_triggered, payment_result) == excepted_return
+    assert payment_processor_triggered._parse_result(transaction_triggered,
+                                                     payment_result) == excepted_return
 
 
 @pytest.mark.django_db
@@ -156,7 +158,8 @@ def test_token_received(transaction_triggered):
 
     transaction_triggered.payment_method.refresh_from_db()
 
+    expected_valid_until = parse_datetime(sender.IPN_CC_EXP_DATE + " 00:00:00")
+    assert transaction_triggered.payment_method.valid_until == expected_valid_until
     assert transaction_triggered.payment_method.token == sender.IPN_CC_TOKEN
-    assert transaction_triggered.payment_method.valid_until == parse_datetime(sender.IPN_CC_EXP_DATE + " 00:00:00")
     assert transaction_triggered.payment_method.display_info == sender.IPN_CC_MASK
     assert transaction_triggered.payment_method.verified

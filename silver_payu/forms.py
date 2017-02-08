@@ -21,8 +21,8 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
         kwargs['initial'].update(billing_details)
 
         super(PayUTransactionFormBase, self).__init__(payment_method,
-                                                  transaction,
-                                                  request, **kwargs)
+                                                      transaction,
+                                                      request, **kwargs)
 
     def _build_form_body(self, transaction, request):
         form_body = {
@@ -78,6 +78,7 @@ class PayUBillingForm(GenericTransactionForm):
 
         super(PayUBillingForm, self).__init__(payment_method, transaction,
                                               request, data, **kwargs)
+
     def to_payu_billing(self):
         data = self.cleaned_data
         return {

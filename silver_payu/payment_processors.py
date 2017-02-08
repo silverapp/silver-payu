@@ -170,6 +170,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 
         return 'default', 'Unknown error code {}'.format(payu_response['code'])
 
+
 @receiver(payment_authorized)
 def payu_ipn_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.REFNOEXT)
