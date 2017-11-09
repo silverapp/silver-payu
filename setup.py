@@ -22,7 +22,7 @@ from setuptools import setup, find_packages
 
 from silver_payu import __version__ as version
 
-install_requires = ['django-payu-ro']
+install_requires = ['django-payu-ro>=1.0.4']
 
 
 def read(fname):
