@@ -101,7 +101,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         :return: True on success, False on failure.
         """
 
-        if transaction.state not in Transaction.States.Pending:
+        if transaction.state != Transaction.States.Pending:
             return False
 
         return self._charge_transaction(transaction)
