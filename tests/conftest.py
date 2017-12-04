@@ -39,6 +39,7 @@ settings.configure(
             'setup_data': {}
         }
     },
+    SILVER_AUTOMATICALLY_CREATE_TRANSACTIONS=True,
     SILVER_PAYMENT_TOKEN_EXPIRATION=datetime.timedelta(minutes=5),
     INSTALLED_APPS=('django.contrib.auth',
                     'django.contrib.contenttypes',
