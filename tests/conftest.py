@@ -45,6 +45,7 @@ settings.configure(
                     'django.contrib.sessions',
                     'django.contrib.admin',
                     'silver',
+                    'payu',
                     'silver_payu',
                     'dal',
                     'dal_select2',
