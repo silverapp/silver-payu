@@ -101,8 +101,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         :return: True on success, False on failure.
         """
 
-        if transaction.state not in [Transaction.States.Initial,
-                                     Transaction.States.Pending]:
+        if transaction.state != Transaction.States.Pending:
             return False
 
         return self._charge_transaction(transaction)
@@ -147,12 +146,10 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
             result = json.loads(result)
 
             if "code" in result and not int(result["code"]):
-                transaction.process()
-                transaction.save()
                 return True
-            else:
-                error_code, error_reason = self._parse_response_error(result)
-                transaction.fail(fail_code=error_code, fail_reason=error_reason)
+
+            error_code, error_reason = self._parse_response_error(result)
+            transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
             transaction.fail(fail_reason=str(error))
 

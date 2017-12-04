@@ -36,7 +36,7 @@ def proforma(customer):
 
 @pytest.fixture
 def invoice(customer, proforma):
-    return G(Invoice, proforma=proforma, state=Invoice.STATES.ISSUED,
+    return G(Invoice, related_document=proforma, state=Invoice.STATES.ISSUED,
              customer=customer, transaction_currency='RON')
 
 

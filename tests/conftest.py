@@ -39,12 +39,14 @@ settings.configure(
             'setup_data': {}
         }
     },
+    SILVER_AUTOMATICALLY_CREATE_TRANSACTIONS=True,
     SILVER_PAYMENT_TOKEN_EXPIRATION=datetime.timedelta(minutes=5),
     INSTALLED_APPS=('django.contrib.auth',
                     'django.contrib.contenttypes',
                     'django.contrib.sessions',
                     'django.contrib.admin',
                     'silver',
+                    'payu',
                     'silver_payu',
                     'dal',
                     'dal_select2',

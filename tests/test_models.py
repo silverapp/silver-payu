@@ -86,7 +86,7 @@ def test_execute_transaction_happy_path(payment_processor_triggered):
     payment_processor_triggered._charge_transaction = lambda x: True
 
     transaction_triggered = MagicMock(payment_processor=payment_processor_triggered,
-                                      state=Transaction.States.Initial)
+                                      state=Transaction.States.Pending)
     assert payment_processor_triggered.execute_transaction(transaction_triggered)
 
 
