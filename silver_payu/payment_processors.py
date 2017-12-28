@@ -137,6 +137,8 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         try:
             result = payment.pay()
         except Exception as error:
+            transaction.fail(fail_reason=str(error))
+            transaction.save()
             return False
 
         return self._parse_result(transaction, result)
