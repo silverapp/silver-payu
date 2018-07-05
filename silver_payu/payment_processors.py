@@ -15,11 +15,11 @@ import json
 
 from django_fsm import TransitionNotAllowed
 
+from django.db import transaction as django_transaction
 from django.dispatch import receiver
-from django.utils.dateparse import parse_datetime
 
 from payu.payments import TokenPayment
-from payu.signals import payment_authorized, alu_token_created
+from payu.signals import payment_authorized, alu_token_created, payment_completed
 
 from silver.models import Transaction
 from silver.payment_processors import PaymentProcessorBase
@@ -73,17 +73,21 @@ class PayUBase(PaymentProcessorBase):
         pass
 
     def handle_transaction_response(self, transaction, request):
-        try:
-            if request.GET.get('ctrl', None):
-                transaction.data['ctrl'] = request.GET['ctrl']
-                transaction.process()
-            else:
-                error = request.GET.get('err', None) or 'Unknown error'
-                transaction.fail(fail_reason=error)
-        except TransitionNotAllowed:
-            pass
+        with django_transaction.atomic():
+            Transaction.objects.select_for_update().filter(pk=transaction.pk).get()
+            transaction.refresh_from_db()
 
-        transaction.save()
+            try:
+                if request.GET.get('ctrl', None):
+                    transaction.data['ctrl'] = request.GET['ctrl']
+                    transaction.process()
+                else:
+                    error = request.GET.get('err', None) or 'Unknown error'
+                    transaction.fail(fail_reason=error)
+            except TransitionNotAllowed:
+                pass
+
+            transaction.save()
 
 
 class PayUManual(PayUBase, ManualProcessorMixin):
@@ -170,13 +174,14 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         return 'default', 'Unknown error code {}'.format(payu_response['code'])
 
 
-@receiver(payment_authorized)
+@receiver([payment_authorized, payment_completed])
 def payu_ipn_received(sender, **kwargs):
     transaction = Transaction.objects.get(uuid=sender.REFNOEXT)
 
     try:
-        transaction.settle()
-        transaction.save()
+        if transaction.state != Transaction.States.Settled:
+            transaction.settle()
+            transaction.save()
     except TransitionNotAllowed as error:
         try:
             transaction.fail(fail_reason=str(error))
@@ -184,6 +189,8 @@ def payu_ipn_received(sender, **kwargs):
         except TransitionNotAllowed:
             transaction.fail_reason = str(error)
             transaction.save()
+
+        raise
 
 
 @receiver(alu_token_created)
