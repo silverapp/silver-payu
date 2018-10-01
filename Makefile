@@ -1,7 +1,7 @@
 full-test: test
 
 test:
-	pytest --cov-report term-missing --cov=silver_payu tests/
+	pytest --cov-report term-missing --cov=silver_payu
 
 run:
 	echo "TBA"
