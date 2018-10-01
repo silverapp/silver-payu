@@ -1,16 +1,17 @@
 import pytest
+from faker import Faker
 from mock import patch
+from test._mock_backport import MagicMock
 
-from silver_payu.forms import PayUTransactionFormBase
+from silver_payu.forms import PayUTransactionFormBase, PayUBillingForm
 
-from .fixtures import (customer, transaction, payment_method,
-                       payment_processor, proforma, invoice)
+from .fixtures import *
 
 
-@pytest.mark.django_db
+faker = Faker()
+
 @patch('silver_payu.forms.datetime')
-def test_payu_transaction_form_build_body(mocked_datetime, transaction,
-                                          payment_method):
+def test_payu_transaction_form_build_body(mocked_datetime, transaction, payment_method):
     mocked_datetime.now.return_value.strftime.return_value = 'order_date'
 
     with patch('silver.utils.payments._get_jwt_token') as mocked_token:
@@ -35,3 +36,38 @@ def test_payu_transaction_form_build_body(mocked_datetime, transaction,
             'PAY_METHOD': 'CCVISAMC',
             'PRICES_CURRENCY': 'RON'
         }
+
+
+@pytest.mark.parametrize('data, form_class, archived_customer', [
+    ({
+        'email': faker.email(),
+        'first_name': faker.first_name(),
+        'last_name': faker.last_name(),
+        'phone': faker.phone_number(),
+        'country': '',
+        'fiscal_code': ''
+    }, PayUBillingForm, {}),
+    ({
+        'email': 'john@acme.com',
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'phone': '+40000000000',
+        'country': 'RO',
+        'city': 'Timisoara',
+        'fiscal_code': ''
+    }, PayUTransactionFormBase, {
+        'BILL_ADDRESS': u"Zalaegerszegi utca 65.\nH-5484 ligetv\xc3\xa1r 9",
+        'BILL_CITY': 'Timisoara',
+        'BILL_COUNTRYCODE': 'RO',
+        'BILL_EMAIL': 'john@acme.com',
+        'BILL_FNAME': 'John',
+        'BILL_LNAME': 'Doe',
+        'BILL_PHONE': '+40000000000'
+    })
+])
+def test_payment_processor_get_form(payment_processor, transaction, data,
+                                    form_class, archived_customer):
+    form = payment_processor.get_form(transaction, MagicMock(POST=data))
+
+    assert isinstance(form, form_class)
+    assert transaction.payment_method.archived_customer == archived_customer

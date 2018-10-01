@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytz
+from django.utils.six import text_type
 
 from payu.forms import PayULiveUpdateForm
 
@@ -42,15 +43,15 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
 
     def _get_order(self, transaction):
         document = transaction.document
-        product_name = 'Payment for {} {}-{}'.format(document.kind,
-                                                     document.series,
-                                                     document.number)
+        product_name = text_type('Payment for {} {}-{}').format(document.kind,
+                                                                document.series,
+                                                                document.number)
         return [{
             'PNAME': product_name,
-            'PCODE': '{}-{}'.format(document.series, document.number),
-            'PRICE': str(transaction.amount),
+            'PCODE': text_type('{}-{}').format(document.series, document.number),
+            'PRICE': text_type(transaction.amount),
             'PRICE_TYPE': 'GROSS',
-            'VAT': str(document.sales_tax_percent or '0')
+            'VAT': text_type(document.sales_tax_percent or '0')
         }]
 
 

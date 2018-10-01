@@ -10,9 +10,7 @@ from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 from silver_payu.models import PayUPaymentMethod
 from silver_payu.payment_processors import payu_ipn_received, payu_token_received
 
-from .fixtures import (customer, transaction, transaction_triggered,
-                       payment_method, proforma, invoice,
-                       payment_processor, payment_processor_triggered)
+from .fixtures import *
 
 faker = Faker()
 
@@ -28,42 +26,6 @@ def test_payment_method_data_set():
 
     payment_method.archived_customer = {'name': 'test'}
     assert payment_method.archived_customer == {'name': 'test'}
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('data, form_class, archived_customer', [
-    ({
-        'email': faker.email(),
-        'first_name': faker.first_name(),
-        'last_name': faker.last_name(),
-        'phone': faker.phone_number(),
-        'country': '',
-        'fiscal_code': ''
-    }, PayUBillingForm, {}),
-    ({
-        'email': 'john@acme.com',
-        'first_name': 'John',
-        'last_name': 'Doe',
-        'phone': '+40000000000',
-        'country': 'RO',
-        'city': 'Timisoara',
-        'fiscal_code': ''
-    }, PayUTransactionFormBase, {
-        'BILL_ADDRESS': '9 9',
-        'BILL_CITY': 'Timisoara',
-        'BILL_COUNTRYCODE': 'RO',
-        'BILL_EMAIL': 'john@acme.com',
-        'BILL_FNAME': 'John',
-        'BILL_LNAME': 'Doe',
-        'BILL_PHONE': '+40000000000'
-    })
-])
-def test_payment_processor_get_form(payment_processor, transaction, data,
-                                    form_class, archived_customer):
-    form = payment_processor.get_form(transaction, MagicMock(POST=data))
-
-    assert isinstance(form, form_class)
-    assert transaction.payment_method.archived_customer == archived_customer
 
 
 @pytest.mark.django_db

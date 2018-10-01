@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+from django.utils.six import text_type
 
 from django_fsm import TransitionNotAllowed
 
@@ -47,8 +48,8 @@ class PayUBase(PaymentProcessorBase):
 
         if form.is_valid():
             if not transaction.payment_method.archived_customer:
-                address = "{} {}".format(transaction.document.customer.address_1,
-                                         transaction.document.customer.address_2)
+                address = text_type("{} {}").format(transaction.document.customer.address_1,
+                                                    transaction.document.customer.address_2)
 
                 archived_customer = form.to_payu_billing()
                 archived_customer['BILL_ADDRESS'] = address
@@ -124,7 +125,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
                 "DELIVERY_PHONE": billing_details["BILL_PHONE"]
             }
         except KeyError as error:
-            transaction.fail(fail_reason='Invalid customer details. [{}]'.format(error))
+            transaction.fail(fail_reason=text_type('Invalid customer details. [{}]').format(error))
             transaction.save()
             return False
 
@@ -141,7 +142,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         try:
             result = payment.pay()
         except Exception as error:
-            transaction.fail(fail_reason=str(error))
+            transaction.fail(fail_reason=text_type(error))
             transaction.save()
             return False
 
@@ -157,7 +158,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
             error_code, error_reason = self._parse_response_error(result)
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
-            transaction.fail(fail_reason=str(error))
+            transaction.fail(fail_reason=text_type(error))
 
         transaction.save()
 
@@ -165,13 +166,13 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 
     def _parse_response_error(self, payu_response):
         if not isinstance(payu_response, dict) or 'code' not in payu_response:
-            return 'default', 'Missing payu error code.({})'.format(payu_response)
+            return 'default', text_type('Missing payu error code.({})').format(payu_response)
 
         if str(payu_response['code']) in ERROR_CODES:
             error = ERROR_CODES[str(payu_response['code'])]
             return error['silver_code'], error['reason']
 
-        return 'default', 'Unknown error code {}'.format(payu_response['code'])
+        return 'default', text_type('Unknown error code {}').format(payu_response['code'])
 
 
 @receiver([payment_authorized, payment_completed])
@@ -184,10 +185,10 @@ def payu_ipn_received(sender, **kwargs):
             transaction.save()
     except TransitionNotAllowed as error:
         try:
-            transaction.fail(fail_reason=str(error))
+            transaction.fail(fail_reason=text_type(error))
             transaction.save()
         except TransitionNotAllowed:
-            transaction.fail_reason = str(error)
+            transaction.fail_reason = text_type(error)
             transaction.save()
 
         raise
