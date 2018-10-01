@@ -1,7 +1,6 @@
 import pytest
 from faker import Faker
-from mock import patch
-from test._mock_backport import MagicMock
+from mock import patch, MagicMock
 
 from silver_payu.forms import PayUTransactionFormBase, PayUBillingForm
 
