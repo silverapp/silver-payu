@@ -6,7 +6,6 @@ from silver import payment_processors
 from silver_payu.models import PayUPaymentMethod
 
 
-
 @pytest.fixture()
 def customer():
     return G(Customer, currency='RON',

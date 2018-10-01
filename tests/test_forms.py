@@ -10,6 +10,7 @@ from .fixtures import *
 
 faker = Faker()
 
+
 @patch('silver_payu.forms.datetime')
 def test_payu_transaction_form_build_body(mocked_datetime, transaction, payment_method):
     mocked_datetime.now.return_value.strftime.return_value = 'order_date'
