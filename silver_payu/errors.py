@@ -66,7 +66,7 @@ ERROR_CODES = {
 
     '1500': {
         'silver_code': 'default',
-        'reason': 'Invalid Token command for the REF_NO you have specified',
+        'reason': 'Invalid Token command for the REF_NO you have specified.',
     },
 
     '1600': {
@@ -81,17 +81,22 @@ ERROR_CODES = {
 
     '2000': {
         'silver_code': 'default',
-        'reason': 'You have exceeded the maximum amount limit for your terminal.Please try again in a few minutes.',
+        'reason': 'You have exceeded the maximum amount limit for your terminal. Please try again in a few minutes.',
     },
 
     '2100': {
         'silver_code': 'default',
-        'reason': 'CURRENCY variable has an unsupported or invalid value',
+        'reason': 'CURRENCY variable has an unsupported or invalid value.',
     },
 
     '2200': {
         'silver_code': 'expired_payment_method',
-        'reason': 'Operation was not performed because the token is disabled',
+        'reason': 'Operation was not performed because the token has expired.',
+    },
+
+    '2300': {
+        'silver_code': 'expired_payment_method',
+        'reason': 'Operation was not performed because the token has expired.',
     },
 
     '2401': {
