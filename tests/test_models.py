@@ -125,3 +125,19 @@ def test_token_received(transaction_triggered):
     assert transaction_triggered.payment_method.token == sender.IPN_CC_TOKEN
     assert transaction_triggered.payment_method.display_info == sender.IPN_CC_MASK
     assert transaction_triggered.payment_method.verified
+
+
+@pytest.mark.django_db
+def test_token_v2_received(transaction_triggered_v2):
+    sender = MagicMock(ipn=MagicMock(REFNOEXT=transaction_triggered_v2.uuid),
+                       IPN_CC_TOKEN=faker.word(), TOKEN_HASH=faker.word(),
+                       IPN_CC_EXP_DATE='2017-07-31', IPN_CC_MASK=faker.word())
+    payu_token_received(sender)
+
+    transaction_triggered_v2.payment_method.refresh_from_db()
+
+    expected_valid_until = parse_datetime(sender.IPN_CC_EXP_DATE + " 00:00:00")
+    assert transaction_triggered_v2.payment_method.valid_until == expected_valid_until
+    assert transaction_triggered_v2.payment_method.token == sender.TOKEN_HASH
+    assert transaction_triggered_v2.payment_method.display_info == sender.IPN_CC_MASK
+    assert transaction_triggered_v2.payment_method.verified

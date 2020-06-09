@@ -1,4 +1,4 @@
-ERROR_CODES = {
+TOKEN_ERROR_CODES = {
     '300': {
         'silver_code': 'default',
         'reason': 'The REF_NO specified is not a valid transaction',
@@ -197,5 +197,52 @@ ERROR_CODES = {
     '4000': {
         'silver_code': 'default',
         'reason': 'Please check if the card scheme used to make the original transaction is still enabled for that merchant.',
+    },
+}
+
+ALU_ERROR_CODES = {
+    "ALREADY_AUTHORIZED": {
+        "silver_code": "default",
+        "reason": "Tried to place a new order with the same ORDER_REF and HASH as previous one."
+    },
+    "AUTHORIZATION_FAILED": {
+        "silver_code": "default",
+        "reason": "The payment was not authorized."
+    },
+    "INVALID_CUSTOMER_INFO": {
+        "silver_code": "default",
+        "reason": "Required data from the Shopper is missing or is malformed."
+    },
+    "INVALID_PAYMENT_INFO": {
+        "silver_code": "default",
+        "reason": "Card data is not correct."
+    },
+    "INVALID_ACCOUNT": {
+        "silver_code": "default",
+        "reason": "The Merchant name is not correct."
+    },
+    "INVALID_PAYMENT_METHOD_CODE": {
+        "silver_code": "default",
+        "reason": "Payment method code is NOT recognized."
+    },
+    "INVALID_CURRENCY": {
+        "silver_code": "default",
+        "reason": "Payment currency is not recognized."
+    },
+    "REQUEST_EXPIRED": {
+        "silver_code": "default",
+        "reason": "The request has expired based on provided ORDER_DATE."
+    },
+    "HASH_MISMATCH": {
+        "silver_code": "default",
+        "reason": "Hash sent by the Merchant does not match the hash calculated by PayU."
+    },
+    "WRONG_VERSION": {
+        "silver_code": "default",
+        "reason": "ALU version sent by the Merchant does not exist."
+    },
+    "INVALID_CC_TOKEN": {
+        "silver_code": "default",
+        "reason": "CC_TOKEN sent by the Merchant is not valid."
     },
 }

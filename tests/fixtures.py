@@ -24,9 +24,26 @@ def payment_processor_triggered():
 
 
 @pytest.fixture()
+def payment_processor_triggered_v2():
+    return payment_processors.get_instance('payu_triggered_v2')
+
+
+@pytest.fixture()
 def payment_method(customer, payment_processor):
     return G(PayUPaymentMethod, customer=customer,
              payment_processor=payment_processor.name)
+
+
+@pytest.fixture()
+def payment_method_triggered(customer, payment_processor_triggered):
+    return G(PayUPaymentMethod, customer=customer,
+             payment_processor=payment_processor_triggered.name)
+
+
+@pytest.fixture()
+def payment_method_triggered_v2(customer, payment_processor_triggered_v2):
+    return G(PayUPaymentMethod, customer=customer,
+             payment_processor=payment_processor_triggered_v2.name)
 
 
 @pytest.fixture()
@@ -48,7 +65,12 @@ def transaction(db, customer, payment_processor, payment_method, proforma, invoi
 
 
 @pytest.fixture()
-def transaction_triggered(customer, payment_processor_triggered,
-                          payment_method, proforma, invoice):
+def transaction_triggered(customer, payment_method_triggered, proforma, invoice):
     return G(Transaction, invoice=invoice, proforma=proforma, currency='RON',
-             amount=invoice.total, payment_method=payment_method)
+             amount=invoice.total, payment_method=payment_method_triggered)
+
+
+@pytest.fixture()
+def transaction_triggered_v2(customer, payment_method_triggered_v2, proforma, invoice):
+    return G(Transaction, invoice=invoice, proforma=proforma, currency='RON',
+             amount=invoice.total, payment_method=payment_method_triggered_v2)
