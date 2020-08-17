@@ -30,6 +30,10 @@ settings.configure(
     PAYU_KEY='1231234567890123',
     PAYMENT_METHOD_SECRET=b'MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=',
     PAYMENT_PROCESSORS={
+        'payu_triggered_v2': {
+            'class': 'silver_payu.payment_processors.PayUTriggeredV2',
+            'setup_data': {}
+        },
         'payu_triggered': {
             'class': 'silver_payu.payment_processors.PayUTriggered',
             'setup_data': {}

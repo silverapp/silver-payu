@@ -13,8 +13,6 @@ from silver.utils.international import countries
 
 
 class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
-    triggered = None
-
     def __init__(self, payment_method, transaction, billing_details,
                  request=None, *args, **kwargs):
 
@@ -26,7 +24,7 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
                                                       request, **kwargs)
 
     def _build_form_body(self, transaction, request):
-        form_body = {
+        return {
             'ORDER_REF': str(transaction.uuid),
             'ORDER_DATE':  datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'),
             'PRICES_CURRENCY': transaction.currency,
@@ -36,10 +34,6 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
             'BACK_REF': get_payment_complete_url(transaction, request),
             'ORDER': self._get_order(transaction)
         }
-        if self.triggered:
-            form_body['LU_ENABLE_TOKEN'] = '1'
-
-        return form_body
 
     def _get_order(self, transaction):
         document = transaction.document
@@ -56,11 +50,30 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
 
 
 class PayUTransactionFormManual(PayUTransactionFormBase):
-    triggered = False
+    pass
 
 
 class PayUTransactionFormTriggered(PayUTransactionFormBase):
-    triggered = True
+    def _build_form_body(self, transaction, request):
+        form_body = super(PayUTransactionFormTriggered, self)._build_form_body(
+            transaction, request
+        )
+
+        form_body['LU_ENABLE_TOKEN'] = '1'
+
+        return form_body
+
+
+class PayUTransactionFormTriggeredV2(PayUTransactionFormBase):
+    def _build_form_body(self, transaction, request):
+        form_body = super(PayUTransactionFormTriggeredV2, self)._build_form_body(
+            transaction, request
+        )
+
+        form_body['LU_ENABLE_TOKEN'] = '1'
+        form_body['LU_TOKEN_TYPE'] = 'PAY_ON_TIME'
+
+        return form_body
 
 
 class PayUBillingForm(GenericTransactionForm):
