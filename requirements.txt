@@ -1,2 +1,2 @@
 django-silver>=0.9
-django-payu-ro==1.2.0
+django-payu-ro==1.2.1
