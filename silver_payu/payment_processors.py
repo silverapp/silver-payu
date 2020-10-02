@@ -53,10 +53,6 @@ class PayUBase(PaymentProcessorBase):
                 archived_customer = form.to_payu_billing()
                 archived_customer['BILL_ADDRESS'] = address
 
-                tax_number = transaction.document.customer.sales_tax_number
-                if tax_number:
-                    archived_customer['BILL_FISCALCODE'] = tax_number
-
                 transaction.payment_method.archived_customer = archived_customer
                 transaction.payment_method.save()
 
