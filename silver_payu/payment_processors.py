@@ -272,9 +272,14 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             error_code, error_reason = self._parse_response_error(return_code)
             transaction.data = {
                 "status": status,
+                "message": error_reason,
                 "return_code": return_code,
-                "message": error_reason
             }
+
+            return_message = element.find("RETURN_MESSAGE")
+            if return_message:
+                transaction.data["return_message"] = return_message.text
+
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
             transaction.fail(fail_reason=text_type(error))
