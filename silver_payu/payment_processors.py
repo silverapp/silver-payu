@@ -277,7 +277,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             }
 
             return_message = element.find("RETURN_MESSAGE")
-            if return_message:
+            if return_message is not None:
                 transaction.data["return_message"] = return_message.text
 
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
