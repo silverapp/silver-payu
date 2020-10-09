@@ -222,7 +222,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
                 provider=transaction.provider.name
             )
 
-            vat = str(int(transaction.document.sales_tax_percent))
+            vat = str(int(transaction.document.sales_tax_percent or 0))
             price_type = "GROSS"  # (VAT included)
         else:
             pname = text_type("Payment for {provider}").format(provider=transaction.provider.name)
