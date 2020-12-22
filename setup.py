@@ -23,7 +23,10 @@ from setuptools import setup, find_packages
 from silver_payu import __version__ as version
 
 
-install_requires = ['django-payu-ro>=1.0.10']
+install_requires = [
+    'django-payu-ro>=1.0.10',
+    'django-ipware>=3'
+]
 
 
 def read(fname):

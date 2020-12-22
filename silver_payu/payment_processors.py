@@ -192,9 +192,10 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         return self._charge_transaction(transaction)
 
     def _charge_transaction(self, transaction):
-        token = transaction.payment_method.token
+        payment_method = transaction.payment_method
+        token = payment_method.token
 
-        customer_details = transaction.payment_method.archived_customer
+        customer_details = payment_method.archived_customer
         try:
             delivery_details = {
                 "DELIVERY_ADDRESS": customer_details["BILL_ADDRESS"],
@@ -245,7 +246,9 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         payment_details.update(delivery_details)
         payment_details["ORDER"] = order_details
 
-        payment = ALUPayment(payment_details, token, lu_token_type="PAY_ON_TIME")
+        payment = ALUPayment(payment_details, token,
+                             stored_credentials_use_type="merchant",
+                             threeds_data=payment_method.threeds_data)
 
         try:
             result = payment.pay()
