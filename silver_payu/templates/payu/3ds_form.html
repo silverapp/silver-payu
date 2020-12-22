@@ -1,0 +1,57 @@
+{% load staticfiles %}
+{% load i18n %}
+
+<form id="3ds-form" enctype="multipart/form-data">
+    <input id="browser-java-enabled-field" name="browser-java-enabled" type="hidden">
+    <input id="browser-language-field" name="browser-language" type="hidden">
+    <input id="browser-color-depth-field" name="browser-color-depth" type="hidden">
+    <input id="browser-screen-height-field" name="browser-screen-height" type="hidden">
+    <input id="browser-screen-width-field" name="browser-screen-width" type="hidden">
+    <input id="browser-timezone" name="browser-timezone" type="hidden">
+</form>
+
+<script type="text/javascript">
+    function send_3ds_params() {
+        document.getElementById("browser-java-enabled-field").value = navigator.javaEnabled() ? "YES" : "NO";
+        document.getElementById("browser-language-field").value = navigator.language || navigator.userLanguage;
+        document.getElementById("browser-color-depth-field").value = window.screen.colorDepth;
+        document.getElementById("browser-screen-height-field").value = window.screen.height;
+        document.getElementById("browser-screen-width-field").value = window.screen.width;
+        document.getElementById("browser-timezone").value = new Date().getTimezoneOffset();
+
+        var form = document.getElementById("3ds-form")
+        var data = new FormData(form);
+
+        var ajaxSettings = {
+            type: 'POST',
+            cache: false,
+            url: '{{ 3ds_data_url }}',
+            data: data,
+            enctype: 'multipart/form-data',
+            processData: false,
+            contentType: false,
+            retries: 5,
+            success: onSuccess,
+        }
+
+        $.ajax(ajaxSettings).fail(onFail)
+
+        function onFail(e) {
+            console.log("Error while sending 3DS data: ", e);
+            if (ajaxSettings.retries-- > 0) {
+                setTimeout(function () {
+                    $.ajax(ajaxSettings).fail(onFail);
+                }, 1000);
+            } else {
+                window.alert("Could not gather 3DSecure data. Please try again later or contact an administrator.");
+            }
+        }
+
+        function onSuccess() {
+            console.log("Successfully sent 3DS data");
+            $("#{{ payu_submit_button_id }}").prop("disabled", false);
+        }
+    }
+
+    window.onload = send_3ds_params;
+</script>

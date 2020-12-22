@@ -1,9 +1,12 @@
+{% load staticfiles %}
 {% load i18n %}
 
 <form action="https://secure.payu.ro/order/lu.php" method="post">
     {{ form.as_p }}
 
-    <button type="submit" class="btn btn-primary pay">
+    <button id="payu-submit-button" type="submit" class="btn btn-primary pay" disabled="disabled">
         {% trans "Pay by Card" %}
     </button>
 </form>
+
+{% include "forms/payu/3ds_form.html" with payu-submit-button="payu-submit-button" %}
