@@ -50,6 +50,9 @@ def threeds_data_view(request, transaction, expired=None):
     if not payment_method:
         return HttpResponseNotAllowed()
 
+    if payment_method.verified or payment_method.canceled:
+        return HttpResponseNotAllowed()
+
     client_ip, _ = get_client_ip(request)
     if not client_ip:
         return HttpResponseServerError()
