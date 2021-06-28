@@ -1,12 +1,10 @@
 import pytest
 from faker import Faker
 from mock import MagicMock, patch
-from django_dynamic_fixture import G
 
 from django.utils.dateparse import parse_datetime
+from silver.models import Transaction
 
-from silver.models import Transaction, PaymentMethod
-from silver_payu.forms import PayUBillingForm, PayUTransactionFormBase
 from silver_payu.models import PayUPaymentMethod
 from silver_payu.payment_processors import payu_ipn_received, payu_token_received
 
@@ -56,11 +54,11 @@ def test_execute_transaction_happy_path(payment_processor_triggered):
 @patch('silver_payu.payment_processors.TokenPayment')
 def test_charge_transaction_triggered(mocked_token_payment,
                                       payment_processor_triggered,
-                                      payment_method, transaction_triggered):
+                                      payment_method_triggered, transaction_triggered):
     mocked_token_payment.return_value.pay.return_value = '{"code": "0"}'
 
-    payment_method.token = faker.word()
-    payment_method.archived_customer = {
+    payment_method_triggered.token = faker.word()
+    payment_method_triggered.archived_customer = {
         "BILL_ADDRESS": faker.address(),
         "BILL_CITY": faker.city(),
         "BILL_EMAIL": faker.email(),
@@ -71,7 +69,7 @@ def test_charge_transaction_triggered(mocked_token_payment,
 
     assert payment_processor_triggered._charge_transaction(transaction_triggered)
 
-    asserted_payment_details = payment_method.archived_customer
+    asserted_payment_details = payment_method_triggered.archived_customer
     asserted_payment_details.update({
         "DELIVERY_ADDRESS": asserted_payment_details["BILL_ADDRESS"],
         "DELIVERY_CITY": asserted_payment_details["BILL_CITY"],
@@ -85,7 +83,7 @@ def test_charge_transaction_triggered(mocked_token_payment,
     })
 
     mocked_token_payment.assert_called_once_with(asserted_payment_details,
-                                                 payment_method.token)
+                                                 payment_method_triggered.token)
 
 
 @pytest.mark.django_db

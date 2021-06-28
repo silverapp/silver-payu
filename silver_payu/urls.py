@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path
 
 from silver.views import pay_transaction_view, complete_payment_view
 
@@ -21,13 +21,13 @@ from silver_payu.views import threeds_data_view
 
 
 urlpatterns = [
-    url(r'^', include('payu.urls')),
+    re_path(r'^', include('payu.urls')),
 
-    url(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/$',
-        pay_transaction_view, name='payment'),
-    url(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/complete$',
-        complete_payment_view, name='payment-complete'),
+    re_path(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/$',
+            pay_transaction_view, name='payment'),
+    re_path(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/complete$',
+            complete_payment_view, name='payment-complete'),
 
-    url(r'silver-payu/3ds_data/(?P<token>[0-9a-zA-Z-_\.]+)',
-        threeds_data_view, name='silver-payu-payment-complete')
+    re_path(r'silver-payu/3ds_data/(?P<token>[0-9a-zA-Z-_\.]+)',
+            threeds_data_view, name='silver-payu-payment-complete')
 ]

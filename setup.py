@@ -17,15 +17,14 @@
 
 import os
 
-import versioneer
 from setuptools import setup, find_packages
 
 from silver_payu import __version__ as version
 
 
 install_requires = [
-    'django-payu-ro>=1.0.10',
-    'django-ipware>=3'
+    'django-payu-ro>=1.4.1',
+    'django-ipware>=3.0.2'
 ]
 
 
@@ -38,7 +37,6 @@ def read(fname):
 setup(
     name="silver-payu",
     version=version,
-    cmdclass=versioneer.get_cmdclass(),
     description=read('DESCRIPTION'),
     long_description=read('README.md'),
     license='Apache 2.0',
@@ -52,9 +50,10 @@ setup(
     install_requires=install_requires,
     classifiers=[
         'Environment :: Web Environment',
-        'Framework :: Django :: 1.8',
+        'Framework :: Django :: 3.1',
+        'Framework :: Django :: 3.2',
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 3.7'
     ]
 )
