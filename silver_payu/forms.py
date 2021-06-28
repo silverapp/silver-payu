@@ -1,7 +1,7 @@
 from datetime import datetime
+from typing import Dict, List
 
 import pytz
-from django.utils.six import text_type
 
 from payu.forms import PayULiveUpdateForm
 
@@ -23,7 +23,7 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
                                                       transaction,
                                                       request, **kwargs)
 
-    def _build_form_body(self, transaction, request):
+    def _build_form_body(self, transaction, request) -> Dict[str, str]:
         return {
             'ORDER_REF': str(transaction.uuid),
             'ORDER_DATE':  datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'),
@@ -35,17 +35,16 @@ class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
             'ORDER': self._get_order(transaction)
         }
 
-    def _get_order(self, transaction):
+    def _get_order(self, transaction) -> List[Dict[str, str]]:
         document = transaction.document
-        product_name = text_type('Payment for {} {}-{}').format(document.kind,
-                                                                document.series,
-                                                                document.number)
+        product_name = f'Payment for {document.kind} {document.series}-{document.number}'
+
         return [{
             'PNAME': product_name,
-            'PCODE': text_type('{}-{}').format(document.series, document.number),
-            'PRICE': text_type(transaction.amount),
+            'PCODE': f'{document.series}-{document.number}',
+            'PRICE': str(transaction.amount),
             'PRICE_TYPE': 'GROSS',
-            'VAT': text_type(document.sales_tax_percent or '0')
+            'VAT': str(document.sales_tax_percent or '0')
         }]
 
 

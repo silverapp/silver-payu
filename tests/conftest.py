@@ -21,6 +21,7 @@ from django.conf import settings
 
 settings.configure(
     DEBUG=True,
+    SECRET_KEY='dummy',
     DATABASES={
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

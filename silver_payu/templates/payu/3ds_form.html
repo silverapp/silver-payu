@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 {% load i18n %}
 
 <form id="3ds-form" enctype="multipart/form-data">
@@ -11,6 +11,8 @@
 </form>
 
 <script type="text/javascript">
+    window.addEventListener("load", function() {
+    (function($) {
     function send_3ds_params() {
         document.getElementById("browser-java-enabled-field").value = navigator.javaEnabled() ? "YES" : "NO";
         document.getElementById("browser-language-field").value = navigator.language || navigator.userLanguage;
@@ -53,5 +55,7 @@
         }
     }
 
-    window.onload = send_3ds_params;
+    send_3ds_params();
+    })(django.jQuery);
+    });
 </script>

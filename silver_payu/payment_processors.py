@@ -16,7 +16,6 @@ from xml.etree import ElementTree
 
 from django.db import transaction as django_transaction
 from django.dispatch import receiver
-from django.utils.six import text_type
 from django_fsm import TransitionNotAllowed
 from payu.payments import ALUPayment, TokenPayment
 from payu.signals import payment_authorized, alu_token_created, payment_completed
@@ -47,8 +46,8 @@ class PayUBase(PaymentProcessorBase):
 
         if form.is_valid():
             if not transaction.payment_method.archived_customer:
-                address = text_type("{} {}").format(transaction.document.customer.address_1,
-                                                    transaction.document.customer.address_2)
+                customer = transaction.document.customer
+                address = f"{customer.address_1} {customer.address_2}"
 
                 archived_customer = form.to_payu_billing()
                 archived_customer['BILL_ADDRESS'] = address
@@ -123,7 +122,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
                 "DELIVERY_PHONE": billing_details["BILL_PHONE"]
             }
         except KeyError as error:
-            transaction.fail(fail_reason=text_type('Invalid customer details. [{}]').format(error))
+            transaction.fail(fail_reason=f'Invalid customer details. [{error}]')
             transaction.save()
             return False
 
@@ -140,7 +139,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         try:
             result = payment.pay()
         except Exception as error:
-            transaction.fail(fail_reason=text_type(error))
+            transaction.fail(fail_reason=str(error))
             transaction.save()
             return False
 
@@ -156,7 +155,7 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
             error_code, error_reason = self._parse_response_error(result)
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
-            transaction.fail(fail_reason=text_type(error))
+            transaction.fail(fail_reason=str(error))
 
         transaction.save()
 
@@ -164,13 +163,13 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
 
     def _parse_response_error(self, payu_response):
         if not isinstance(payu_response, dict) or 'code' not in payu_response:
-            return 'default', text_type('Missing payu error code.({})').format(payu_response)
+            return 'default', f'Missing payu error code.({payu_response})'
 
         if str(payu_response['code']) in TOKEN_ERROR_CODES:
             error = TOKEN_ERROR_CODES[str(payu_response['code'])]
             return error['silver_code'], error['reason']
 
-        return 'default', text_type('Unknown error code {}').format(payu_response['code'])
+        return 'default', f'Unknown error code {payu_response["code"]}'
 
 
 class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
@@ -206,7 +205,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
                 "DELIVERY_PHONE": customer_details["BILL_PHONE"]
             }
         except KeyError as error:
-            transaction.fail(fail_reason=text_type('Invalid customer details. [{}]').format(error))
+            transaction.fail(fail_reason=f'Invalid customer details. [{error}]')
             transaction.save()
             return False
 
@@ -217,7 +216,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         }
 
         if transaction.document:
-            pname = text_type("{provider} {doc_type} {doc_number}").format(
+            pname = "{provider} {doc_type} {doc_number}".format(
                 doc_type=transaction.document.kind,
                 doc_number=transaction.document.series_number,
                 provider=transaction.provider.name
@@ -226,7 +225,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             vat = str(int(transaction.document.sales_tax_percent or 0))
             price_type = "GROSS"  # (VAT included)
         else:
-            pname = text_type("Payment for {provider}").format(provider=transaction.provider.name)
+            pname = f"Payment for {transaction.provider.name}"
 
             vat = "0"
             price_type = "NET"  # (VAT will be added by PayU)
@@ -253,7 +252,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         try:
             result = payment.pay()
         except Exception as error:
-            transaction.fail(fail_reason=text_type(error))
+            transaction.fail(fail_reason=str(error))
             transaction.save()
             return False
 
@@ -281,7 +280,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
 
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
-            transaction.fail(fail_reason=text_type(error))
+            transaction.fail(fail_reason=str(error))
 
         transaction.save()
 
@@ -292,7 +291,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             error = ALU_ERROR_CODES[str(return_code)]
             return error['silver_code'], error['reason']
 
-        return 'default', text_type('Unknown error code {}').format(return_code)
+        return 'default', f'Unknown error code {return_code}'
 
 
 @receiver([payment_authorized, payment_completed])
@@ -305,10 +304,10 @@ def payu_ipn_received(sender, **kwargs):
             transaction.save()
     except TransitionNotAllowed as error:
         try:
-            transaction.fail(fail_reason=text_type(error))
+            transaction.fail(fail_reason=str(error))
             transaction.save()
         except TransitionNotAllowed:
-            transaction.fail_reason = text_type(error)
+            transaction.fail_reason = str(error)
             transaction.save()
 
         raise
