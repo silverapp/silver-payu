@@ -5,6 +5,10 @@
 _Nothing yet_
 
 
+## 0.5.1 (2022-01-05)
+- Require django-payu-ro==1.4.2
+
+
 ## 0.5.0 (2021-06-28)
 - Require Python==3.7, Django>3.1,<3.3, django-silver>=0.11 and django-payu-ro==1.4.1. **(BREAKING)**
 
