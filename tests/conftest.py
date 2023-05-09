@@ -21,48 +21,49 @@ from django.conf import settings
 
 settings.configure(
     DEBUG=True,
-    SECRET_KEY='dummy',
+    SECRET_KEY="dummy",
     DATABASES={
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
         }
     },
-    PAYU_MERCHANT='PAYUDEMO',
-    PAYU_KEY='1231234567890123',
-    PAYMENT_METHOD_SECRET=b'MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=',
+    PAYU_MERCHANT="PAYUDEMO",
+    PAYU_KEY="1231234567890123",
+    PAYMENT_METHOD_SECRET=b"MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=",
     PAYMENT_PROCESSORS={
-        'payu_triggered_v2': {
-            'class': 'silver_payu.payment_processors.PayUTriggeredV2',
-            'setup_data': {}
+        "payu_triggered_v2": {
+            "class": "silver_payu.payment_processors.PayUTriggeredV2",
+            "setup_data": {},
         },
-        'payu_triggered': {
-            'class': 'silver_payu.payment_processors.PayUTriggered',
-            'setup_data': {}
+        "payu_triggered": {
+            "class": "silver_payu.payment_processors.PayUTriggered",
+            "setup_data": {},
         },
-        'payu_manual': {
-            'class': 'silver_payu.payment_processors.PayUManual',
-            'setup_data': {}
-        }
+        "payu_manual": {
+            "class": "silver_payu.payment_processors.PayUManual",
+            "setup_data": {},
+        },
     },
     SILVER_AUTOMATICALLY_CREATE_TRANSACTIONS=True,
     SILVER_PAYMENT_TOKEN_EXPIRATION=datetime.timedelta(minutes=5),
-    INSTALLED_APPS=('django.contrib.auth',
-                    'django.contrib.contenttypes',
-                    'django.contrib.sessions',
-                    'django.contrib.admin',
-                    'silver',
-                    'payu',
-                    'silver_payu',
-                    'dal',
-                    'dal_select2',
-                    ),
-    ROOT_URLCONF='silver_payu.urls',
+    INSTALLED_APPS=(
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
+        "django.contrib.sessions",
+        "django.contrib.admin",
+        "silver",
+        "payu",
+        "silver_payu",
+        "dal",
+        "dal_select2",
+    ),
+    ROOT_URLCONF="silver_payu.urls",
     CACHES={
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
         }
-    }
+    },
 )
 
 django.setup()

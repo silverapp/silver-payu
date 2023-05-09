@@ -22,38 +22,36 @@ from setuptools import setup, find_packages
 from silver_payu import __version__ as version
 
 
-install_requires = [
-    'django-payu-ro>=1.4.1',
-    'django-ipware>=3.0.2'
-]
+install_requires = ["django-payu-ro>=1.4.1", "django-ipware>=3.0.2"]
 
 
 def read(fname):
     try:
         return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except IOError:
-        return ''
+        return ""
+
 
 setup(
     name="silver-payu",
     version=version,
-    description=read('DESCRIPTION'),
-    long_description=read('README.md'),
-    license='Apache 2.0',
-    platforms=['OS Independent'],
-    keywords='django, app, reusable, billing, invoicing, api',
-    author='Presslabs',
-    author_email='ping@presslabs.com',
-    url='https://github.com/silverapp/silver-payu',
+    description=read("DESCRIPTION"),
+    long_description=read("README.md"),
+    license="Apache 2.0",
+    platforms=["OS Independent"],
+    keywords="django, app, reusable, billing, invoicing, api",
+    author="Presslabs",
+    author_email="ping@presslabs.com",
+    url="https://github.com/silverapp/silver-payu",
     packages=find_packages(),
     include_package_data=True,
     install_requires=install_requires,
     classifiers=[
-        'Environment :: Web Environment',
-        'Framework :: Django :: 3.1',
-        'Framework :: Django :: 3.2',
-        'Development Status :: 5 - Production/Stable',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3.7'
-    ]
+        "Environment :: Web Environment",
+        "Framework :: Django :: 3.1",
+        "Framework :: Django :: 3.2",
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3.7",
+    ],
 )

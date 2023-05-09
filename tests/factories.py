@@ -12,6 +12,6 @@ class PayUPaymentMethodFactory(DjangoModelFactory):
     class Meta:
         model = PayUPaymentMethod
 
-    payment_processor = 'payu_triggered_v2'
+    payment_processor = "payu_triggered_v2"
     customer = factory.SubFactory(CustomerFactory)
     data = factory.Sequence(lambda i: {})

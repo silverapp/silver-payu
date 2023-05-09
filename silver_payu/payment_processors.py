@@ -21,13 +21,18 @@ from payu.payments import ALUPayment, TokenPayment
 from payu.signals import payment_authorized, alu_token_created, payment_completed
 from silver.models import Transaction
 from silver.payment_processors import PaymentProcessorBase
-from silver.payment_processors.mixins import (TriggeredProcessorMixin,
-                                              ManualProcessorMixin)
+from silver.payment_processors.mixins import (
+    TriggeredProcessorMixin,
+    ManualProcessorMixin,
+)
 
 from silver_payu.errors import TOKEN_ERROR_CODES, ALU_ERROR_CODES
-from silver_payu.forms import (PayUTransactionFormManual,
-                               PayUTransactionFormTriggered, PayUBillingForm,
-                               PayUTransactionFormTriggeredV2)
+from silver_payu.forms import (
+    PayUTransactionFormManual,
+    PayUTransactionFormTriggered,
+    PayUBillingForm,
+    PayUTransactionFormTriggeredV2,
+)
 from silver_payu.models import PayUPaymentMethod
 from silver_payu.views import PayUTransactionView
 
@@ -35,14 +40,17 @@ from silver_payu.views import PayUTransactionView
 class PayUBase(PaymentProcessorBase):
     payment_method_class = PayUPaymentMethod
     transaction_view_class = PayUTransactionView
-    allowed_currencies = ('RON', 'USD', 'EUR')
+    allowed_currencies = ("RON", "USD", "EUR")
 
     _has_been_setup = False
 
     def get_form(self, transaction, request):
-        form = PayUBillingForm(payment_method=transaction.payment_method,
-                               transaction=transaction, request=request,
-                               data=request.POST)
+        form = PayUBillingForm(
+            payment_method=transaction.payment_method,
+            transaction=transaction,
+            request=request,
+            data=request.POST,
+        )
 
         if form.is_valid():
             if not transaction.payment_method.archived_customer:
@@ -50,14 +58,17 @@ class PayUBase(PaymentProcessorBase):
                 address = f"{customer.address_1} {customer.address_2}"
 
                 archived_customer = form.to_payu_billing()
-                archived_customer['BILL_ADDRESS'] = address
+                archived_customer["BILL_ADDRESS"] = address
 
                 transaction.payment_method.archived_customer = archived_customer
                 transaction.payment_method.save()
 
-            form = self.form_class(payment_method=transaction.payment_method,
-                                   transaction=transaction, request=request,
-                                   billing_details=form.to_payu_billing())
+            form = self.form_class(
+                payment_method=transaction.payment_method,
+                transaction=transaction,
+                request=request,
+                billing_details=form.to_payu_billing(),
+            )
 
         return form
 
@@ -73,11 +84,11 @@ class PayUBase(PaymentProcessorBase):
             transaction.refresh_from_db()
 
             try:
-                if request.GET.get('ctrl', None):
-                    transaction.data['ctrl'] = request.GET['ctrl']
+                if request.GET.get("ctrl", None):
+                    transaction.data["ctrl"] = request.GET["ctrl"]
                     transaction.process()
                 else:
-                    error = request.GET.get('err', None) or 'Unknown error'
+                    error = request.GET.get("err", None) or "Unknown error"
                     transaction.fail(fail_reason=error)
             except TransitionNotAllowed:
                 pass
@@ -86,7 +97,7 @@ class PayUBase(PaymentProcessorBase):
 
 
 class PayUManual(PayUBase, ManualProcessorMixin):
-    template_slug = 'payu_manual'
+    template_slug = "payu_manual"
     form_class = PayUTransactionFormManual
 
 
@@ -94,7 +105,8 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
     """
     Uses TokenV1 API for recurrent payments.
     """
-    template_slug = 'payu_triggered'
+
+    template_slug = "payu_triggered"
     form_class = PayUTransactionFormTriggered
 
     def execute_transaction(self, transaction):
@@ -119,17 +131,17 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
                 "DELIVERY_EMAIL": billing_details["BILL_EMAIL"],
                 "DELIVERY_FNAME": billing_details["BILL_FNAME"],
                 "DELIVERY_LNAME": billing_details["BILL_LNAME"],
-                "DELIVERY_PHONE": billing_details["BILL_PHONE"]
+                "DELIVERY_PHONE": billing_details["BILL_PHONE"],
             }
         except KeyError as error:
-            transaction.fail(fail_reason=f'Invalid customer details. [{error}]')
+            transaction.fail(fail_reason=f"Invalid customer details. [{error}]")
             transaction.save()
             return False
 
         payment_details = {
             "AMOUNT": str(transaction.amount),
             "CURRENCY": str(transaction.currency),
-            "EXTERNAL_REF": str(transaction.uuid)
+            "EXTERNAL_REF": str(transaction.uuid),
         }
         payment_details.update(billing_details)
         payment_details.update(delivery_details)
@@ -162,21 +174,22 @@ class PayUTriggered(PayUBase, TriggeredProcessorMixin):
         return False
 
     def _parse_response_error(self, payu_response):
-        if not isinstance(payu_response, dict) or 'code' not in payu_response:
-            return 'default', f'Missing payu error code.({payu_response})'
+        if not isinstance(payu_response, dict) or "code" not in payu_response:
+            return "default", f"Missing payu error code.({payu_response})"
 
-        if str(payu_response['code']) in TOKEN_ERROR_CODES:
-            error = TOKEN_ERROR_CODES[str(payu_response['code'])]
-            return error['silver_code'], error['reason']
+        if str(payu_response["code"]) in TOKEN_ERROR_CODES:
+            error = TOKEN_ERROR_CODES[str(payu_response["code"])]
+            return error["silver_code"], error["reason"]
 
-        return 'default', f'Unknown error code {payu_response["code"]}'
+        return "default", f'Unknown error code {payu_response["code"]}'
 
 
 class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
     """
     Uses ALUPaymentV3 API for recurrent payments.
     """
-    template_slug = 'payu_triggered'
+
+    template_slug = "payu_triggered"
     form_class = PayUTransactionFormTriggeredV2
 
     def execute_transaction(self, transaction):
@@ -202,10 +215,10 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
                 "DELIVERY_EMAIL": customer_details["BILL_EMAIL"],
                 "DELIVERY_FNAME": customer_details["BILL_FNAME"],
                 "DELIVERY_LNAME": customer_details["BILL_LNAME"],
-                "DELIVERY_PHONE": customer_details["BILL_PHONE"]
+                "DELIVERY_PHONE": customer_details["BILL_PHONE"],
             }
         except KeyError as error:
-            transaction.fail(fail_reason=f'Invalid customer details. [{error}]')
+            transaction.fail(fail_reason=f"Invalid customer details. [{error}]")
             transaction.save()
             return False
 
@@ -219,7 +232,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             pname = "{provider} {doc_type} {doc_number}".format(
                 doc_type=transaction.document.kind,
                 doc_number=transaction.document.series_number,
-                provider=transaction.provider.name
+                provider=transaction.provider.name,
             )
 
             vat = str(int(transaction.document.sales_tax_percent or 0))
@@ -232,12 +245,12 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
 
         order_details = [
             {
-                'PNAME': pname,
-                'PCODE': str(transaction.uuid),
-                'PRICE': str(transaction.amount),
-                'VAT': vat,
-                'PRICE_TYPE': price_type,
-                'QTY': '1',
+                "PNAME": pname,
+                "PCODE": str(transaction.uuid),
+                "PRICE": str(transaction.amount),
+                "VAT": vat,
+                "PRICE_TYPE": price_type,
+                "QTY": "1",
             }
         ]
 
@@ -245,9 +258,12 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         payment_details.update(delivery_details)
         payment_details["ORDER"] = order_details
 
-        payment = ALUPayment(payment_details, token,
-                             stored_credentials_use_type="merchant",
-                             threeds_data=payment_method.threeds_data)
+        payment = ALUPayment(
+            payment_details,
+            token,
+            stored_credentials_use_type="merchant",
+            threeds_data=payment_method.threeds_data,
+        )
 
         try:
             result = payment.pay()
@@ -262,7 +278,7 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
         try:
             element = ElementTree.fromstring(result)
             status = element.find("STATUS").text
-            return_code = element.find('RETURN_CODE').text
+            return_code = element.find("RETURN_CODE").text
 
             if status == "SUCCESS":
                 return True
@@ -289,9 +305,9 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
     def _parse_response_error(self, return_code):
         if str(return_code) in ALU_ERROR_CODES:
             error = ALU_ERROR_CODES[str(return_code)]
-            return error['silver_code'], error['reason']
+            return error["silver_code"], error["reason"]
 
-        return 'default', f'Unknown error code {return_code}'
+        return "default", f"Unknown error code {return_code}"
 
 
 @receiver([payment_authorized, payment_completed])

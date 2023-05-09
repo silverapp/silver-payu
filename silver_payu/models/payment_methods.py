@@ -24,28 +24,28 @@ class PayUPaymentMethod(PaymentMethod):
 
     @property
     def token(self):
-        return self.decrypt_data(self.data.get('token'))
+        return self.decrypt_data(self.data.get("token"))
 
     @token.setter
     def token(self, value):
-        self.data['token'] = self.encrypt_data(value)
+        self.data["token"] = self.encrypt_data(value)
 
     @property
     def archived_customer(self):
-        raw_customer = self.data.get('archived_customer', '')
-        return json.loads(self.decrypt_data(raw_customer) or '{}')
+        raw_customer = self.data.get("archived_customer", "")
+        return json.loads(self.decrypt_data(raw_customer) or "{}")
 
     @archived_customer.setter
     def archived_customer(self, value):
         raw_customer = json.dumps(value)
-        self.data['archived_customer'] = self.encrypt_data(raw_customer)
+        self.data["archived_customer"] = self.encrypt_data(raw_customer)
 
     @property
     def threeds_data(self):
-        raw_data = self.data.get('3ds_data', '')
-        return json.loads(self.decrypt_data(raw_data) or '{}')
+        raw_data = self.data.get("3ds_data", "")
+        return json.loads(self.decrypt_data(raw_data) or "{}")
 
     @threeds_data.setter
     def threeds_data(self, value):
         raw_data = json.dumps(value)
-        self.data['3ds_data'] = self.encrypt_data(raw_data)
+        self.data["3ds_data"] = self.encrypt_data(raw_data)

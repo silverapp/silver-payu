@@ -13,39 +13,49 @@ from silver.utils.international import countries
 
 
 class PayUTransactionFormBase(GenericTransactionForm, PayULiveUpdateForm):
-    def __init__(self, payment_method, transaction, billing_details,
-                 request=None, *args, **kwargs):
+    def __init__(
+        self,
+        payment_method,
+        transaction,
+        billing_details,
+        request=None,
+        *args,
+        **kwargs,
+    ):
+        kwargs["initial"] = self._build_form_body(transaction, request)
+        kwargs["initial"].update(billing_details)
 
-        kwargs['initial'] = self._build_form_body(transaction, request)
-        kwargs['initial'].update(billing_details)
-
-        super(PayUTransactionFormBase, self).__init__(payment_method,
-                                                      transaction,
-                                                      request, **kwargs)
+        super(PayUTransactionFormBase, self).__init__(
+            payment_method, transaction, request, **kwargs
+        )
 
     def _build_form_body(self, transaction, request) -> Dict[str, str]:
         return {
-            'ORDER_REF': str(transaction.uuid),
-            'ORDER_DATE':  datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'),
-            'PRICES_CURRENCY': transaction.currency,
-            'CURRENCY': transaction.currency,
-            'PAY_METHOD': 'CCVISAMC',
-            'AUTOMODE': '1',
-            'BACK_REF': get_payment_complete_url(transaction, request),
-            'ORDER': self._get_order(transaction)
+            "ORDER_REF": str(transaction.uuid),
+            "ORDER_DATE": datetime.now(pytz.UTC).strftime("%Y-%m-%d %H:%M:%S"),
+            "PRICES_CURRENCY": transaction.currency,
+            "CURRENCY": transaction.currency,
+            "PAY_METHOD": "CCVISAMC",
+            "AUTOMODE": "1",
+            "BACK_REF": get_payment_complete_url(transaction, request),
+            "ORDER": self._get_order(transaction),
         }
 
     def _get_order(self, transaction) -> List[Dict[str, str]]:
         document = transaction.document
-        product_name = f'Payment for {document.kind} {document.series}-{document.number}'
+        product_name = (
+            f"Payment for {document.kind} {document.series}-{document.number}"
+        )
 
-        return [{
-            'PNAME': product_name,
-            'PCODE': f'{document.series}-{document.number}',
-            'PRICE': str(transaction.amount),
-            'PRICE_TYPE': 'GROSS',
-            'VAT': str(document.sales_tax_percent or '0')
-        }]
+        return [
+            {
+                "PNAME": product_name,
+                "PCODE": f"{document.series}-{document.number}",
+                "PRICE": str(transaction.amount),
+                "PRICE_TYPE": "GROSS",
+                "VAT": str(document.sales_tax_percent or "0"),
+            }
+        ]
 
 
 class PayUTransactionFormManual(PayUTransactionFormBase):
@@ -58,7 +68,7 @@ class PayUTransactionFormTriggered(PayUTransactionFormBase):
             transaction, request
         )
 
-        form_body['LU_ENABLE_TOKEN'] = '1'
+        form_body["LU_ENABLE_TOKEN"] = "1"
 
         return form_body
 
@@ -69,8 +79,8 @@ class PayUTransactionFormTriggeredV2(PayUTransactionFormBase):
             transaction, request
         )
 
-        form_body['LU_ENABLE_TOKEN'] = '1'
-        form_body['LU_TOKEN_TYPE'] = 'PAY_ON_TIME'
+        form_body["LU_ENABLE_TOKEN"] = "1"
+        form_body["LU_TOKEN_TYPE"] = "PAY_ON_TIME"
 
         return form_body
 
@@ -83,34 +93,35 @@ class PayUBillingForm(GenericTransactionForm):
     city = forms.CharField()
     country = forms.ChoiceField(choices=countries)
 
-    def __init__(self, payment_method, transaction,
-                 request=None, data=None, *args, **kwargs):
-
+    def __init__(
+        self, payment_method, transaction, request=None, data=None, *args, **kwargs
+    ):
         if not data:
             data = self._build_form_body(payment_method.customer)
 
-        super(PayUBillingForm, self).__init__(payment_method, transaction,
-                                              request, data, **kwargs)
+        super(PayUBillingForm, self).__init__(
+            payment_method, transaction, request, data, **kwargs
+        )
 
     def to_payu_billing(self):
         data = self.cleaned_data
         return {
-            'BILL_FNAME': data['first_name'],
-            'BILL_LNAME': data['last_name'],
-            'BILL_EMAIL': data['email'],
-            'BILL_PHONE': data['phone'],
-            'BILL_CITY': data['city'],
-            'BILL_COUNTRYCODE': data['country']
+            "BILL_FNAME": data["first_name"],
+            "BILL_LNAME": data["last_name"],
+            "BILL_EMAIL": data["email"],
+            "BILL_PHONE": data["phone"],
+            "BILL_CITY": data["city"],
+            "BILL_COUNTRYCODE": data["country"],
         }
 
     def _build_form_body(self, customer):
         form_body = {
-            'first_name': customer.first_name,
-            'last_name': customer.last_name,
-            'email': customer.email,
-            'phone': customer.phone or '',
-            'country': customer.country,
-            'city': customer.city
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "email": customer.email,
+            "phone": customer.phone or "",
+            "country": customer.country,
+            "city": customer.city,
         }
 
         return form_body

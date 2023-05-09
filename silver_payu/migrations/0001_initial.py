@@ -5,19 +5,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('silver', '0032_auto_20170201_1342'),
+        ("silver", "0032_auto_20170201_1342"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PayUPaymentMethod',
-            fields=[
-            ],
+            name="PayUPaymentMethod",
+            fields=[],
             options={
-                'proxy': True,
+                "proxy": True,
             },
-            bases=('silver.paymentmethod',),
+            bases=("silver.paymentmethod",),
         ),
     ]

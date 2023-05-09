@@ -28,112 +28,97 @@ DEBUG = False
 SITE_ID = 1
 
 USE_TZ = True
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "db.sqlite",
     }
 }
 
 EXTERNAL_APPS = [
     # Django core apps
     # 'django_admin_bootstrapped',
-    'django.contrib.admin',
-    'django.contrib.admindocs',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.messages',
-    'django.contrib.sessions',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.admindocs",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.sessions",
+    "django.contrib.staticfiles",
 ]
 
 INSTALLED_APPS = EXTERNAL_APPS
 
-ROOT_URLCONF = 'silver.urls'
+ROOT_URLCONF = "silver.urls"
 PROJECT_ROOT = os.path.dirname(__file__)
 
-FIXTURE_DIRS = (
-    PROJECT_ROOT,
-    PROJECT_ROOT + '/silver/'
-)
+FIXTURE_DIRS = (PROJECT_ROOT, PROJECT_ROOT + "/silver/")
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
-        'DIRS': [
-            PROJECT_ROOT + '/payment_processors/templates/',
-            PROJECT_ROOT + '/templates/',
-            PROJECT_ROOT + '/silver/templates/',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "APP_DIRS": True,
+        "DIRS": [
+            PROJECT_ROOT + "/payment_processors/templates/",
+            PROJECT_ROOT + "/templates/",
+            PROJECT_ROOT + "/silver/templates/",
         ],
-        'OPTIONS': {
-            'context_processors': (
+        "OPTIONS": {
+            "context_processors": (
                 "django.contrib.auth.context_processors.auth",
                 "django.template.context_processors.debug",
                 "django.template.context_processors.i18n",
                 "django.template.context_processors.media",
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
-                "django.contrib.messages.context_processors.messages"
+                "django.contrib.messages.context_processors.messages",
             )
-        }
+        },
     }
 ]
 
-MEDIA_ROOT = PROJECT_ROOT + '/app_media/'
-MEDIA_URL = '/app_media/'
+MEDIA_ROOT = PROJECT_ROOT + "/app_media/"
+MEDIA_URL = "/app_media/"
 
-STATIC_ROOT = PROJECT_ROOT + '/app_static/'
-STATIC_URL = '/app_static/'
+STATIC_ROOT = PROJECT_ROOT + "/app_static/"
+STATIC_URL = "/app_static/"
 
 MIDDLEWARE_CLASSES = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
 
-SECRET_KEY = 'secret'
+SECRET_KEY = "secret"
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'silver.api.pagination.LinkHeaderPagination'
+    "DEFAULT_PAGINATION_CLASS": "silver.api.pagination.LinkHeaderPagination"
 }
 
-LOGGING['loggers']['xhtml2pdf'] = {
-    'level': 'DEBUG',
-    'handlers': ['console']
-}
+LOGGING["loggers"]["xhtml2pdf"] = {"level": "DEBUG", "handlers": ["console"]}
 
-LOGGING['loggers']['pisa'] = {
-    'level': 'DEBUG',
-    'handlers': ['console']
-}
+LOGGING["loggers"]["pisa"] = {"level": "DEBUG", "handlers": ["console"]}
 
-LOGGING['loggers']['django'] = {
-    'level': 'DEBUG',
-    'handlers': ['console']
-}
+LOGGING["loggers"]["django"] = {"level": "DEBUG", "handlers": ["console"]}
 
-LOGGING['loggers']['django.security'] = {
-    'level': 'DEBUG',
-    'handlers': ['console']
-}
-LOGGING['formatters'] = {}
-LOGGING['formatters']['verbose'] = {
-    'format': "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-    'datefmt': "%d/%b/%Y %H:%M:%S"
+LOGGING["loggers"]["django.security"] = {"level": "DEBUG", "handlers": ["console"]}
+LOGGING["formatters"] = {}
+LOGGING["formatters"]["verbose"] = {
+    "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+    "datefmt": "%d/%b/%Y %H:%M:%S",
 }
 
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

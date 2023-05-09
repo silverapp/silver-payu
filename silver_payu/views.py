@@ -36,14 +36,17 @@ class PayUTransactionView(GenericTransactionView):
 
 
 def threeds_data_url(transaction, request):
-    kwargs = {'token': _get_jwt_token(transaction)}
-    return reverse('silver-payu-payment-complete', kwargs=kwargs, request=request)
+    kwargs = {"token": _get_jwt_token(transaction)}
+    return reverse("silver-payu-payment-complete", kwargs=kwargs, request=request)
 
 
 @csrf_exempt
 @get_transaction_from_token
 def threeds_data_view(request, transaction, expired=None):
-    if transaction.state not in [Transaction.States.Initial, Transaction.States.Pending]:
+    if transaction.state not in [
+        Transaction.States.Initial,
+        Transaction.States.Pending,
+    ]:
         return HttpResponseNotAllowed()
 
     payment_method = transaction.payment_method
@@ -59,14 +62,14 @@ def threeds_data_view(request, transaction, expired=None):
 
     threeds_data = {
         "BROWSER_IP": client_ip,
-        "BROWSER_ACCEPT_HEADER": request.META.get('HTTP_ACCEPT'),
-        "BROWSER_JAVA_ENABLED": request.POST.get('browser-java-enabled'),
-        "BROWSER_LANGUAGE": request.POST.get('browser-language'),
-        "BROWSER_COLOR_DEPTH": request.POST.get('browser-color-depth'),
-        "BROWSER_SCREEN_HEIGHT": request.POST.get('browser-screen-height'),
-        "BROWSER_SCREEN_WIDTH": request.POST.get('browser-screen-width'),
-        "BROWSER_TIMEZONE": request.POST.get('browser-timezone'),
-        "BROWSER_USER_AGENT": request.META.get('HTTP_USER_AGENT'),
+        "BROWSER_ACCEPT_HEADER": request.META.get("HTTP_ACCEPT"),
+        "BROWSER_JAVA_ENABLED": request.POST.get("browser-java-enabled"),
+        "BROWSER_LANGUAGE": request.POST.get("browser-language"),
+        "BROWSER_COLOR_DEPTH": request.POST.get("browser-color-depth"),
+        "BROWSER_SCREEN_HEIGHT": request.POST.get("browser-screen-height"),
+        "BROWSER_SCREEN_WIDTH": request.POST.get("browser-screen-width"),
+        "BROWSER_TIMEZONE": request.POST.get("browser-timezone"),
+        "BROWSER_USER_AGENT": request.META.get("HTTP_USER_AGENT"),
     }
 
     payment_method.threeds_data = threeds_data
