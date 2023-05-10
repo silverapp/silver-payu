@@ -1,4 +1,5 @@
 import pytest
+import responses
 
 from silver import payment_processors
 from silver.fixtures.factories import (
@@ -10,6 +11,11 @@ from silver.fixtures.factories import (
 from silver.models import Invoice
 
 from tests.factories import PayUPaymentMethodFactory
+
+
+@pytest.fixture(autouse=True)
+def reset_responses():
+    responses.reset()
 
 
 @pytest.fixture()

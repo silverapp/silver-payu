@@ -14,6 +14,7 @@
 import json
 from xml.etree import ElementTree
 
+from django.conf import settings
 from django.db import transaction as django_transaction
 from django.dispatch import receiver
 from django_fsm import TransitionNotAllowed
@@ -269,12 +270,48 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             result = payment.pay()
         except Exception as error:
             transaction.fail(fail_reason=str(error))
+            self._log_request_response(transaction, payment)
+
             transaction.save()
+
             return False
 
-        return self._parse_result(transaction, result)
+        return self._parse_result(transaction, result, payment)
 
-    def _parse_result(self, transaction, result):
+    def _log_request_response(self, transaction, payment):
+        if not payment:
+            return
+
+        request = getattr(payment, "_request", {})
+        redacted_fields = ["CC_TOKEN", "CC_CVV"]
+
+        if getattr(settings, "SILVER_PAYU_REDACT_PII", False):
+            redacted_fields += [
+                "BROWSER_IP",
+                "BILL_ADDRESS",
+                "BILL_CITY",
+                "BILL_PHONE",
+                "BILL_FNAME",
+                "BILL_LNAME",
+                "BILL_EMAIL",
+            ]
+
+        for field in redacted_fields:
+            if request.get(field):
+                request[field] = "[REDACTED]"
+
+        response = getattr(payment, "_response", "")
+        if isinstance(response, bytes):
+            response = response.decode("utf-8")
+
+        transaction.data.update(
+            {
+                "_request": str(request),
+                "_response": str(response),
+            }
+        )
+
+    def _parse_result(self, transaction, result, payment=None):
         try:
             element = ElementTree.fromstring(result)
             status = element.find("STATUS").text
@@ -284,18 +321,22 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
                 return True
 
             error_code, error_reason = self._parse_response_error(return_code)
-            transaction.data = {
-                "status": status,
-                "message": error_reason,
-                "return_code": return_code,
-            }
+            transaction.data.update(
+                {
+                    "status": status,
+                    "message": error_reason,
+                    "return_code": return_code,
+                }
+            )
 
             return_message = element.find("RETURN_MESSAGE")
             if return_message is not None:
                 transaction.data["return_message"] = return_message.text
 
+            self._log_request_response(transaction, payment)
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
+            self._log_request_response(transaction, payment)
             transaction.fail(fail_reason=str(error))
 
         transaction.save()

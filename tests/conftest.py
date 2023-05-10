@@ -29,6 +29,10 @@ settings.configure(
     },
     PAYU_MERCHANT="PAYUDEMO",
     PAYU_KEY="1231234567890123",
+    PAYU_CALLBACK_URL="https://test.com",
+    PAYU_LU_URL="https://test.com",
+    PAYU_ALU_URL="https://test.com",
+    PAYU_IDN_URL="https://test.com",
     PAYMENT_METHOD_SECRET=b"MOW_x1k-ayes3KqnFHNZUxvKipC8iLjxiczEN76TIEA=",
     PAYMENT_PROCESSORS={
         "payu_triggered_v2": {
