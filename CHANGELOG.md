@@ -5,6 +5,10 @@
 _Nothing yet_
 
 
+## 0.6.1 (2023-05-10)
+- Always save request for transactions
+
+
 ## 0.6.0 (2023-05-10)
 - Require django-payu-ro==1.5.0
 - Use black to format code

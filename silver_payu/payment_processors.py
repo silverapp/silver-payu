@@ -300,16 +300,14 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             if request.get(field):
                 request[field] = "[REDACTED]"
 
-        response = getattr(payment, "_response", "")
-        if isinstance(response, bytes):
-            response = response.decode("utf-8")
+        transaction.data["_request"] = str(request)
 
-        transaction.data.update(
-            {
-                "_request": str(request),
-                "_response": str(response),
-            }
-        )
+        if transaction.state == Transaction.States.Failed:
+            response = getattr(payment, "_response", "")
+            if isinstance(response, bytes):
+                response = response.decode("utf-8")
+
+            transaction.data["_response"] = str(response)
 
     def _parse_result(self, transaction, result, payment=None):
         try:
@@ -318,6 +316,9 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             return_code = element.find("RETURN_CODE").text
 
             if status == "SUCCESS":
+                self._log_request_response(transaction, payment)
+                transaction.save()
+
                 return True
 
             error_code, error_reason = self._parse_response_error(return_code)
@@ -333,12 +334,11 @@ class PayUTriggeredV2(PayUBase, TriggeredProcessorMixin):
             if return_message is not None:
                 transaction.data["return_message"] = return_message.text
 
-            self._log_request_response(transaction, payment)
             transaction.fail(fail_code=error_code, fail_reason=error_reason)
         except ValueError as error:
-            self._log_request_response(transaction, payment)
             transaction.fail(fail_reason=str(error))
 
+        self._log_request_response(transaction, payment)
         transaction.save()
 
         return False

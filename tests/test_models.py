@@ -46,13 +46,67 @@ def test_execute_transaction_wrong_transaction_state(payment_processor_triggered
 
 
 @pytest.mark.django_db
-def test_execute_transaction_happy_path(payment_processor_triggered):
-    payment_processor_triggered._charge_transaction = lambda x: True
+def test_execute_transaction_happy_path(
+    payment_method_triggered_v2,
+    payment_processor_triggered_v2,
+    transaction_triggered_v2,
+):
+    response = """<?xml version="1.0"?>
+    <EPAYMENT>
+        <REFNO>123456789</REFNO>
+        <ALIAS>9592b7736c9e277fea8cc79c2e5b5a23</ALIAS>
+        <STATUS>SUCCESS</STATUS>
+        <RETURN_CODE>AUTHORIZED</RETURN_CODE>
+        <RETURN_MESSAGE>Successfull authorized</RETURN_MESSAGE>
+        <DATE>2012-11-06 20:52:20</DATE>
+        <ORDER_REF>7305</ORDER_REF>
+        <AUTH_CODE>13157TUlA15117</AUTH_CODE>
+        <HASH>b560a38e2b3e7bcbac328bbd6218bc60</HASH>
+    </EPAYMENT>
+    """
 
-    transaction_triggered = MagicMock(
-        payment_processor=payment_processor_triggered, state=Transaction.States.Pending
+    responses.add(
+        responses.POST,
+        settings.PAYU_ALU_URL,
+        body=response,
+        status=200,
     )
-    assert payment_processor_triggered.execute_transaction(transaction_triggered)
+
+    payment_method_triggered_v2.archived_customer = {
+        "BILL_ADDRESS": faker.address(),
+        "BILL_CITY": faker.city(),
+        "BILL_EMAIL": faker.email(),
+        "BILL_FNAME": faker.first_name(),
+        "BILL_LNAME": faker.last_name(),
+        "BILL_PHONE": faker.phone_number(),
+    }
+    payment_method_triggered_v2.threeds_data = {
+        "BROWSER_IP": "111.1.11.111",
+        "BROWSER_ACCEPT_HEADER": "*/*",
+        "BROWSER_JAVA_ENABLED": "NO",
+        "BROWSER_LANGUAGE": "en-US",
+        "BROWSER_COLOR_DEPTH": "32",
+        "BROWSER_SCREEN_HEIGHT": "1024",
+        "BROWSER_SCREEN_WIDTH": "768",
+        "BROWSER_TIMEZONE": "180",
+        "BROWSER_USER_AGENT": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
+    }
+    payment_method_triggered_v2.save()
+
+    assert payment_processor_triggered_v2.process_transaction(transaction_triggered_v2)
+
+    transaction_triggered_v2.refresh_from_db()
+    assert transaction_triggered_v2.state == Transaction.States.Pending
+
+    assert (
+        "'STRONG_CUSTOMER_AUTHENTICATION': 'YES'"
+        in transaction_triggered_v2.data["_request"]
+    )
+    assert "'BROWSER_IP': '111.1.11.111'" in transaction_triggered_v2.data["_request"]
+    assert (
+        f"'BILL_FNAME': '{payment_method_triggered_v2.archived_customer['BILL_FNAME']}'"
+        in transaction_triggered_v2.data["_request"]
+    )
 
 
 @pytest.mark.django_db
