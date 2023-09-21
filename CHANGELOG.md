@@ -5,6 +5,11 @@
 _Nothing yet_
 
 
+## 0.7 (2023-09-19)
+- Require django-payu-ro==1.6.0, Django>=3.2,<5.0 **(BREAKING)**
+- Require Python==3.11 (older versions might work, but they are not officially supported) **(BREAKING)**
+
+
 ## 0.6.1 (2023-05-10)
 - Always save request for transactions
 
